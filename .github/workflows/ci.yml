@@ -30,6 +30,16 @@ jobs:
         run: go test -run "Loopback" -v ./internal/route/
         env:
           LSROUTE_LIVE: "1"
+      - name: Raw output of the real tool towards a public address (a sample to download)
+        run: go test -run DumpTheRawOutput -v ./internal/route/
+        env:
+          LSROUTE_DUMP: samples
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samples-${{ matrix.os }}
+          path: samples
+          if-no-files-found: ignore
       - name: Build
         run: go build -o librespeed-route ./cmd/librespeed-route
       - name: The command traces the loopback

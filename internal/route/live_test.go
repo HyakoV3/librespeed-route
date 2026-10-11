@@ -61,3 +61,28 @@ func TestTracepathOnTheLoopback(t *testing.T) {
 		t.Fatalf("%v %+v\n%s", perr, res, out.Text)
 	}
 }
+
+// With LSROUTE_DUMP=<folder> the raw output of the real tool towards a public address is written there (the CI keeps it as a file to
+// download: real samples of macOS and Windows, with the bytes as the tool wrote them into a pipe). Not a check: it only needs the tool to run.
+func TestDumpTheRawOutputOfTheRealTool(t *testing.T) {
+	dir := os.Getenv("LSROUTE_DUMP")
+	if dir == "" {
+		t.Skip("LSROUTE_DUMP is not set")
+	}
+	spec, err := CommandFor(runtime.GOOS, netip.MustParseAddr("8.8.8.8"), FileExists, os.Getenv("SystemRoot"))
+	if err != nil {
+		t.Skipf("no tool: %v", err)
+	}
+	out, rerr := Run(context.Background(), spec, Options{Timeout: 90 * time.Second})
+	if rerr != nil && out.Text == "" {
+		t.Skipf("the tool wrote nothing: %v", rerr)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	name := runtime.GOOS + "-" + spec.Tool + "-8.8.8.8.txt"
+	if err := os.WriteFile(dir+"/"+name, []byte(out.Text), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%s: %d bytes, stopped %q", name, len(out.Text), out.Stopped)
+}

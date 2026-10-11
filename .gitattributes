@@ -1,0 +1,4 @@
+# Go files with LF everywhere; the test data is never converted (the Windows vectors have CRLF on purpose, and the sha256 of the copy of the
+# page parser in testdata/PIN is the one of its bytes)
+* text=auto eol=lf
+testdata/** -text
