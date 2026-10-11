@@ -33,7 +33,7 @@ jobs:
       - name: Raw output of the real tool towards a public address (a sample to download)
         run: go test -run DumpTheRawOutput -v ./internal/route/
         env:
-          LSROUTE_DUMP: samples
+          LSROUTE_DUMP: ${{ github.workspace }}/samples
         continue-on-error: true
       - uses: actions/upload-artifact@v4
         with:

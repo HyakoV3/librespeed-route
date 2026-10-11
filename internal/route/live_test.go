@@ -73,7 +73,7 @@ func TestDumpTheRawOutputOfTheRealTool(t *testing.T) {
 	if err != nil {
 		t.Skipf("no tool: %v", err)
 	}
-	out, rerr := Run(context.Background(), spec, Options{Timeout: 90 * time.Second})
+	out, rerr := Run(context.Background(), spec, Options{Timeout: 45 * time.Second})
 	if rerr != nil && out.Text == "" {
 		t.Skipf("the tool wrote nothing: %v", rerr)
 	}
