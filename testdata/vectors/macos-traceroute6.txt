@@ -1,0 +1,6 @@
+traceroute6 to dns.google (2001:4860:4860::8888) from 2804:14c:1::10, 64 hops max, 12 byte packets
+ 1  fe80::1%en0  3.2 ms  2.1 ms  1.9 ms
+ 2  2804:14c:1::1  7.0 ms  6.4 ms  6.6 ms
+ 3  * * *
+ 4  2001:4860:0:1::5c8  19.8 ms  19.1 ms  19.3 ms
+ 5  dns.google (2001:4860:4860::8888)  19.0 ms  18.7 ms  18.9 ms

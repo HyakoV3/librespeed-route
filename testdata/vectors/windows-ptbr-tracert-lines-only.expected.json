@@ -1,0 +1,55 @@
+{
+  "tool": "tracert",
+  "family": 4,
+  "target_name": null,
+  "target_ip": null,
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "192.168.0.1",
+      "alt_ips": [],
+      "rtt_min": 0.5,
+      "rtt_avg": 0.5,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 2,
+      "ip": "10.20.0.1",
+      "alt_ips": [],
+      "rtt_min": 2,
+      "rtt_avg": 2.33,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 3,
+      "ip": "100.64.10.34",
+      "alt_ips": [],
+      "rtt_min": 10,
+      "rtt_avg": 11,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 4,
+      "ip": "187.16.208.188",
+      "alt_ips": [],
+      "rtt_min": 17,
+      "rtt_avg": 17.67,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": null,
+  "nonce": null
+}

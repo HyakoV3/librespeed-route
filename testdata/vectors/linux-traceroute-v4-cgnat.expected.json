@@ -1,0 +1,146 @@
+{
+  "tool": "traceroute",
+  "family": 4,
+  "target_name": "8.8.8.8",
+  "target_ip": "8.8.8.8",
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "192.168.0.1",
+      "alt_ips": [],
+      "rtt_min": 1.2,
+      "rtt_avg": 1.22,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 2,
+      "ip": "172.24.74.112",
+      "alt_ips": [],
+      "rtt_min": 5.23,
+      "rtt_avg": 5.67,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 3,
+      "ip": "172.24.75.37",
+      "alt_ips": [],
+      "rtt_min": 6.27,
+      "rtt_avg": 6.59,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 4,
+      "ip": "192.168.68.21",
+      "alt_ips": [],
+      "rtt_min": 6.61,
+      "rtt_avg": 6.8,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 5,
+      "ip": "172.24.75.17",
+      "alt_ips": [],
+      "rtt_min": 5.24,
+      "rtt_avg": 5.25,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 6,
+      "ip": "100.65.61.62",
+      "alt_ips": [],
+      "rtt_min": 4.77,
+      "rtt_avg": 5.27,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 7,
+      "ip": "100.64.10.34",
+      "alt_ips": [],
+      "rtt_min": 12.13,
+      "rtt_avg": 13.07,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 8,
+      "ip": "100.64.10.69",
+      "alt_ips": [
+        "100.64.10.88",
+        "100.64.10.51"
+      ],
+      "rtt_min": 17.86,
+      "rtt_avg": 18.5,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 9,
+      "ip": "100.64.10.77",
+      "alt_ips": [],
+      "rtt_min": 18.43,
+      "rtt_avg": 18.46,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 10,
+      "ip": "72.14.208.80",
+      "alt_ips": [],
+      "rtt_min": 18.6,
+      "rtt_avg": 19.2,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 11,
+      "ip": null,
+      "alt_ips": [],
+      "rtt_min": null,
+      "rtt_avg": null,
+      "sent": 3,
+      "answered": 0,
+      "flags": [],
+      "scope": "none"
+    },
+    {
+      "ttl": 12,
+      "ip": "8.8.8.8",
+      "alt_ips": [],
+      "rtt_min": 16.8,
+      "rtt_avg": 17.64,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": null,
+  "nonce": null
+}

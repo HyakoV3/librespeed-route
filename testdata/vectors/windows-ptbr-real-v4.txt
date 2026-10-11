@@ -1,0 +1,18 @@
+
+Rastreando a rota para 8.8.8.8 com no máximo 30 saltos
+
+  1    <1 ms    <1 ms    <1 ms  192.168.0.1 
+  2     6 ms     6 ms    <1 ms  172.24.74.112 
+  3     2 ms     1 ms     1 ms  172.24.75.37 
+  4     6 ms     3 ms     2 ms  192.168.68.21 
+  5     4 ms     1 ms     1 ms  172.24.75.17 
+  6     1 ms     1 ms     1 ms  100.65.61.62 
+  7    10 ms    10 ms    10 ms  100.64.10.34 
+  8    15 ms    19 ms    18 ms  100.64.10.88 
+  9    19 ms    14 ms    15 ms  100.64.10.77 
+ 10    19 ms    15 ms    15 ms  72.14.208.80 
+ 11    20 ms    17 ms    16 ms  142.251.69.137 
+ 12    16 ms    15 ms    16 ms  192.178.240.77 
+ 13    19 ms    18 ms    15 ms  8.8.8.8 
+
+Rastreamento concluído.

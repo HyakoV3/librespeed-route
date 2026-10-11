@@ -1,0 +1,66 @@
+{
+  "tool": "traceroute",
+  "family": 6,
+  "target_name": "2606:4700:4700::1111",
+  "target_ip": "2606:4700:4700::1111",
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "2804:14c:1::1",
+      "alt_ips": [],
+      "rtt_min": 1.47,
+      "rtt_avg": 1.49,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 2,
+      "ip": "2804:14c:ff::2",
+      "alt_ips": [],
+      "rtt_min": 4,
+      "rtt_avg": 4.1,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 3,
+      "ip": "2001:12ff:0:4::9",
+      "alt_ips": [],
+      "rtt_min": 12.2,
+      "rtt_avg": 12.33,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 4,
+      "ip": "2400:cb00:12:1024::6ca2:8c44",
+      "alt_ips": [],
+      "rtt_min": 11,
+      "rtt_avg": 11.1,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 5,
+      "ip": "2606:4700:4700::1111",
+      "alt_ips": [],
+      "rtt_min": 10.8,
+      "rtt_avg": 10.9,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": null,
+  "nonce": null
+}

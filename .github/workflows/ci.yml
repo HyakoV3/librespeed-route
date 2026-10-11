@@ -1,0 +1,40 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: The copy of the page parser is the one that is pinned
+        shell: bash
+        run: |
+          expected=$(grep -o 'sha256 [0-9a-f]\{64\}' testdata/PIN | head -1 | cut -d' ' -f2)
+          actual=$(node -e 'console.log(require("crypto").createHash("sha256").update(require("fs").readFileSync("testdata/web/route-parse.js")).digest("hex"))')
+          test "$expected" = "$actual"
+      - run: go vet ./...
+      - run: go test ./...
+      - name: The real tool of the system, on the loopback
+        run: go test -run "Loopback" -v ./internal/route/
+        env:
+          LSROUTE_LIVE: "1"
+      - name: Build
+        run: go build -o librespeed-route ./cmd/librespeed-route
+      - name: The command traces the loopback
+        shell: bash
+        run: |
+          # The command refuses non-public addresses on purpose: the exit code 2 is the answer
+          ./librespeed-route 127.0.0.1 || test $? -eq 2
+          ./librespeed-route --version

@@ -1,0 +1,25 @@
+version: 2
+project_name: librespeed-route
+before:
+  hooks:
+    - go test ./...
+builds:
+  - main: ./cmd/librespeed-route
+    binary: librespeed-route
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE-MIT
+      - LICENSE-APACHE
+      - README.md
+checksum:
+  name_template: checksums.txt

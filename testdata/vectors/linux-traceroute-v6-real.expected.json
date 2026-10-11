@@ -1,0 +1,85 @@
+{
+  "tool": "traceroute",
+  "family": 6,
+  "target_name": "2001:4860:4860::8888",
+  "target_ip": "2001:4860:4860::8888",
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "2602:fdb8:131:c001::1",
+      "alt_ips": [],
+      "rtt_min": 0.22,
+      "rtt_avg": 0.26,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 2,
+      "ip": "2602:fdb8:132:101::1",
+      "alt_ips": [
+        "2602:fdb8:1f3:200::1"
+      ],
+      "rtt_min": 0.2,
+      "rtt_avg": 0.25,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 3,
+      "ip": "2620:b8:4000:2f01::1",
+      "alt_ips": [],
+      "rtt_min": 0.51,
+      "rtt_avg": 0.59,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 4,
+      "ip": "2607:f8b0:8482:40::1",
+      "alt_ips": [
+        "2607:f8b0:8484:40::1",
+        "2607:f8b0:8484:80::1"
+      ],
+      "rtt_min": 0.43,
+      "rtt_avg": 0.61,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 5,
+      "ip": "2607:f8b0:8484:c0::1",
+      "alt_ips": [
+        "2607:f8b0:8482:140::1",
+        "2607:f8b0:8482:c0::1"
+      ],
+      "rtt_min": 0.44,
+      "rtt_avg": 0.57,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 6,
+      "ip": "2001:4860:4860::8888",
+      "alt_ips": [],
+      "rtt_min": 0.48,
+      "rtt_avg": 1.11,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": null,
+  "nonce": null
+}

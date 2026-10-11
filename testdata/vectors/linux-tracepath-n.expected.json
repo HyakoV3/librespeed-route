@@ -1,0 +1,121 @@
+{
+  "tool": "tracepath",
+  "family": 4,
+  "target_name": null,
+  "target_ip": null,
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "192.168.0.1",
+      "alt_ips": [],
+      "rtt_min": 0.96,
+      "rtt_avg": 1.13,
+      "sent": 2,
+      "answered": 2,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 2,
+      "ip": "172.24.74.112",
+      "alt_ips": [],
+      "rtt_min": 3.01,
+      "rtt_avg": 3.01,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 3,
+      "ip": "172.24.75.37",
+      "alt_ips": [],
+      "rtt_min": 3.13,
+      "rtt_avg": 3.13,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 4,
+      "ip": "192.168.68.21",
+      "alt_ips": [],
+      "rtt_min": 3.22,
+      "rtt_avg": 3.22,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 5,
+      "ip": "172.24.75.17",
+      "alt_ips": [],
+      "rtt_min": 2.44,
+      "rtt_avg": 2.44,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 6,
+      "ip": "100.65.61.62",
+      "alt_ips": [],
+      "rtt_min": 3.53,
+      "rtt_avg": 3.53,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 7,
+      "ip": "100.64.10.34",
+      "alt_ips": [],
+      "rtt_min": 14.23,
+      "rtt_avg": 14.23,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 8,
+      "ip": "100.64.10.67",
+      "alt_ips": [],
+      "rtt_min": 15.91,
+      "rtt_avg": 15.91,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 9,
+      "ip": "187.16.208.188",
+      "alt_ips": [],
+      "rtt_min": 29.07,
+      "rtt_avg": 29.07,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 10,
+      "ip": "172.68.16.35",
+      "alt_ips": [],
+      "rtt_min": 21.66,
+      "rtt_avg": 21.66,
+      "sent": 1,
+      "answered": 1,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": false,
+  "nonce": null
+}

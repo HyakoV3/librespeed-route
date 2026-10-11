@@ -1,0 +1,18 @@
+
+Rastreando a rota para dns.google [8.8.8.8]
+com no máximo 12 saltos:
+
+  1    <1 ms    <1 ms    <1 ms  router [192.168.0.1] 
+  2     1 ms    <1 ms    <1 ms  172.24.74.112 
+  3     2 ms     1 ms     1 ms  172.24.75.37 
+  4     2 ms     2 ms     2 ms  192.168.68.21 
+  5     1 ms     1 ms     2 ms  172.24.75.17 
+  6     1 ms     1 ms     1 ms  100.65.61.62 
+  7    10 ms    10 ms    10 ms  100.64.10.34 
+  8    15 ms    14 ms    15 ms  100.64.10.88 
+  9    15 ms    15 ms    15 ms  100.64.10.77 
+ 10    19 ms    15 ms    15 ms  72.14.208.80 
+ 11    16 ms    19 ms    16 ms  142.251.69.137 
+ 12    17 ms    15 ms    15 ms  192.178.240.77 
+
+Rastreamento concluído.

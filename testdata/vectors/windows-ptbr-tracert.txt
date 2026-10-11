@@ -1,0 +1,13 @@
+
+Rastreando a rota para dns.google [8.8.8.8]
+com no máximo 30 saltos:
+
+  1    <1 ms    <1 ms    <1 ms  192.168.0.1
+  2     3 ms     2 ms     2 ms  10.20.0.1
+  3     *        *        *     Esgotado o tempo limite do pedido.
+  4    11 ms    10 ms    12 ms  100.64.10.34
+  5    18 ms    17 ms    18 ms  187.16.208.188
+  6    19 ms    18 ms    19 ms  72.14.208.80
+  7    18 ms    17 ms    18 ms  dns.google [8.8.8.8]
+
+Rastreamento concluído.

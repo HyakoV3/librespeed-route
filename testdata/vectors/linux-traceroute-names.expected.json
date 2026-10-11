@@ -1,0 +1,124 @@
+{
+  "tool": "traceroute",
+  "family": 4,
+  "target_name": "8.8.8.8",
+  "target_ip": "8.8.8.8",
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "192.168.0.1",
+      "alt_ips": [],
+      "rtt_min": 2.19,
+      "rtt_avg": 2.21,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 2,
+      "ip": "172.24.74.112",
+      "alt_ips": [],
+      "rtt_min": 3.48,
+      "rtt_avg": 3.5,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 3,
+      "ip": "172.24.75.37",
+      "alt_ips": [],
+      "rtt_min": 5.37,
+      "rtt_avg": 5.4,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 4,
+      "ip": "192.168.68.21",
+      "alt_ips": [],
+      "rtt_min": 4.84,
+      "rtt_avg": 4.86,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 5,
+      "ip": "172.24.75.17",
+      "alt_ips": [],
+      "rtt_min": 3.79,
+      "rtt_avg": 3.89,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "private"
+    },
+    {
+      "ttl": 6,
+      "ip": "100.65.61.62",
+      "alt_ips": [],
+      "rtt_min": 2.25,
+      "rtt_avg": 3.41,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 7,
+      "ip": "100.64.10.34",
+      "alt_ips": [],
+      "rtt_min": 12.26,
+      "rtt_avg": 12.37,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 8,
+      "ip": "100.64.10.73",
+      "alt_ips": [
+        "100.64.10.65",
+        "100.64.10.53"
+      ],
+      "rtt_min": 16.58,
+      "rtt_avg": 16.86,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 9,
+      "ip": "100.64.10.77",
+      "alt_ips": [],
+      "rtt_min": 17.2,
+      "rtt_avg": 17.29,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "cgnat"
+    },
+    {
+      "ttl": 10,
+      "ip": "72.14.208.80",
+      "alt_ips": [],
+      "rtt_min": 18,
+      "rtt_avg": 18.05,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": null,
+  "nonce": null
+}
