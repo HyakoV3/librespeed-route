@@ -1,0 +1,8 @@
+
+Tracing route to 8.8.8.8 over a maximum of 30 hops
+
+  1     *        *        *     Request timed out.
+  2     *        *        *     Request timed out.
+  3     *        *        *     Request timed out.
+  4     *        *        *     Request timed out.
+  5     *        *        *     Request timed out.

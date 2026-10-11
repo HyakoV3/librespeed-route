@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/netip"
 	"os"
 	"runtime"
 	"strings"
@@ -143,6 +142,11 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 		return ExitFailed
 	}
 	res, perr := route.Parse(out.Text)
+	if perr == route.ErrUnknown && silentHops(out.Text) > 0 {
+		// Every hop was silent: the network drops the probes of this tool (a firewall, a runner, a captive network)
+		fmt.Fprintf(stderr, "librespeed-route: no router answered (%d silent hops): the network may be dropping the packets of %s\n", silentHops(out.Text), spec.Tool)
+		return ExitFailed
+	}
 	if perr != nil {
 		fmt.Fprintf(stderr, "librespeed-route: the output of %s was not understood (%v)", spec.Tool, perr)
 		if out.Stopped != "" {
@@ -195,4 +199,13 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 	return ExitOK
 }
 
-var _ = netip.Addr{}
+// silentHops counts the lines of the output that are a hop in which nothing answered
+func silentHops(text string) int {
+	n := 0
+	for _, line := range strings.Split(text, "\n") {
+		if route.SilentLine(strings.TrimRight(line, "\r")) {
+			n++
+		}
+	}
+	return n
+}

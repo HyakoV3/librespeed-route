@@ -200,3 +200,15 @@ func TestTheExitCodesAreTheDocumentedOnes(t *testing.T) {
 		t.Error("the help does not say the codes")
 	}
 }
+
+// A network that drops every probe (the Windows runner of the CI did): the message says so, and the exit code is "failed"
+func TestEverySilentHop(t *testing.T) {
+	f := &fake{output: route.Output{Text: vector(t, "windows-en-real-allsilent-ci.txt"), Stopped: "silent"}}
+	env := f.env()
+	env.GOOS = "windows"
+	env.Exists = func(string) bool { return true }
+	code, out, errOut := run(t, context.Background(), env, "8.8.8.8")
+	if code != ExitFailed || out != "" || !strings.Contains(errOut, "no router answered (5 silent hops)") {
+		t.Errorf("%d %q %q", code, out, errOut)
+	}
+}

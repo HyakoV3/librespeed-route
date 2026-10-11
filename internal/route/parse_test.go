@@ -39,6 +39,13 @@ func TestVectorsEqualThePage(t *testing.T) {
 				t.Fatal(err)
 			}
 			got, perr := Parse(string(text))
+			if m, isMap := generic(t, want).(map[string]any); isMap && m["error"] != nil {
+				// The page says the text is not a route (every hop is silent): this port says the same
+				if perr == nil || perr.Error() != m["error"] {
+					t.Fatalf("%s: got %v, the page says %v", name, perr, m["error"])
+				}
+				return
+			}
 			if perr != nil {
 				t.Fatalf("%s: %v", name, perr)
 			}
