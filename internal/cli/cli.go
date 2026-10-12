@@ -44,6 +44,9 @@ type Env struct {
 	Nonce      func() (string, error)
 	// Install is where the commands that install the host for the browsers work (the home of the user, the registry of Windows...)
 	Install install.Env
+	// Interactive: the program was opened with a double click (Windows, no arguments): it asks what to do instead of printing the usage
+	Interactive bool
+	Stdin       io.Reader
 }
 
 // SystemEnv is the real system.
@@ -51,6 +54,8 @@ func SystemEnv(version string) Env {
 	exe, _ := os.Executable()
 	home, _ := os.UserHomeDir()
 	return Env{
+		Interactive: runtime.GOOS == "windows" && len(os.Args) == 1 && ownsConsole(),
+		Stdin:       os.Stdin,
 		Install: install.Env{
 			GOOS:         runtime.GOOS,
 			Home:         home,
@@ -141,6 +146,11 @@ func subcommand(args []string, stdout, stderr io.Writer, env Env) (int, bool) {
 
 // Main runs the command and gives the exit code.
 func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env) int {
+	if len(args) == 0 && env.Interactive && env.Stdin != nil {
+		e := env.Install
+		e.Out = stdout
+		return interactive(env.Stdin, stdout, e)
+	}
 	if len(args) >= 1 {
 		if code, done := subcommand(args, stdout, stderr, env); done {
 			return code

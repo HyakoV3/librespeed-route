@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/HyakoV3/librespeed-route/internal/install"
 	"github.com/HyakoV3/librespeed-route/internal/route"
 )
 
@@ -175,13 +177,23 @@ func itoa(i int) string {
 	return string(rune('0'+i/10)) + string(rune('0'+i%10))
 }
 
+// The command reads its input only in the window that a double click opens (Interactive); everything else never touches it
+type failingInput struct{ t *testing.T }
+
+func (f failingInput) Read([]byte) (int, error) {
+	f.t.Error("the command read its input")
+	return 0, io.EOF
+}
+
 func TestTheCommandNeverReadsItsInput(t *testing.T) {
-	data, err := os.ReadFile("cli.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(data), "os.Stdin") || strings.Contains(string(data), "bufio.NewScanner(os.Stdin") {
-		t.Error("the command reads stdin")
+	good := route.Output{Text: vector(t, "linux-traceroute-v4-cgnat.txt")}
+	for _, args := range [][]string{nil, {"8.8.8.8"}, {"--json", "8.8.8.8"}, {"--version"}, {"--help"}, {"doctor"}, {"192.168.0.1"}} {
+		f := &fake{output: good}
+		env := f.env()
+		env.Stdin = failingInput{t}
+		env.Install.Out = io.Discard
+		var out, errOut bytes.Buffer
+		Main(context.Background(), args, &out, &errOut, env)
 	}
 }
 
@@ -212,3 +224,58 @@ func TestEverySilentHop(t *testing.T) {
 		t.Errorf("%d %q %q", code, out, errOut)
 	}
 }
+
+// The window of a double click: install, uninstall or quit, and it waits for a key before it ends
+func TestTheWindowOfADoubleClick(t *testing.T) {
+	setup := func() (Env, *bytes.Buffer, map[string]string) {
+		reg := map[string]string{}
+		f := &fake{}
+		env := f.env()
+		env.Interactive = true
+		env.Install = install.Env{GOOS: "windows", Home: t.TempDir(), LocalAppData: filepath.Join(t.TempDir(), "Local"), Exe: os.Args[0], Registry: mapRegistry(reg)}
+		return env, &bytes.Buffer{}, reg
+	}
+	// Install
+	env, out, reg := setup()
+	env.Stdin = strings.NewReader("i\n\n")
+	if code := Main(context.Background(), nil, out, io.Discard, env); code != ExitOK {
+		t.Fatalf("install: %d %s", code, out)
+	}
+	if len(reg) != 4 || !strings.Contains(out.String(), "Done. Now add the extension") || !strings.Contains(out.String(), "Press Enter to close") {
+		t.Errorf("install: %v\n%s", reg, out)
+	}
+	// Uninstall
+	env2, out2, reg2 := setup()
+	env2.Stdin = strings.NewReader("i\n\n")
+	Main(context.Background(), nil, out2, io.Discard, env2)
+	env2.Stdin = strings.NewReader(" U \n\n")
+	out2.Reset()
+	if code := Main(context.Background(), nil, out2, io.Discard, env2); code != ExitOK || len(reg2) != 0 {
+		t.Errorf("uninstall: %d %v\n%s", code, reg2, out2)
+	}
+	// Quit, anything else, and an input that ends at once: nothing is changed
+	for _, in := range []string{"q\n\n", "x\n\n", "\n", ""} {
+		e, o, r := setup()
+		e.Stdin = strings.NewReader(in)
+		if code := Main(context.Background(), nil, o, io.Discard, e); code != ExitOK || len(r) != 0 || !strings.Contains(o.String(), "Nothing was changed") {
+			t.Errorf("%q: %d %v\n%s", in, code, r, o)
+		}
+	}
+	// Not a double click: no arguments is the usage, as before, and the input is not read
+	f := &fake{}
+	plain := f.env()
+	plain.Stdin = failingInput{t}
+	var errOut bytes.Buffer
+	if code := Main(context.Background(), nil, io.Discard, &errOut, plain); code != ExitUsage || !strings.Contains(errOut.String(), "Usage:") {
+		t.Errorf("no arguments: %d %s", code, errOut.String())
+	}
+}
+
+type mapRegistry map[string]string
+
+func (r mapRegistry) Set(key, value string) error { r[key] = value; return nil }
+func (r mapRegistry) Get(key string) (string, bool) {
+	v, ok := r[key]
+	return v, ok
+}
+func (r mapRegistry) Delete(key string) error { delete(r, key); return nil }
