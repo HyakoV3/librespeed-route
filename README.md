@@ -167,3 +167,6 @@ program and a canned traceroute.
 ## Licence
 
 MIT OR Apache-2.0, at your choice (`LICENSE-MIT`, `LICENSE-APACHE`).
+
+The icon of the extension (`extension/icons`) is the favicon of the [better pages](https://github.com/HyakoV3/speedtest), a fork of LibreSpeed (LGPL-3.0); it
+is not covered by this licence.

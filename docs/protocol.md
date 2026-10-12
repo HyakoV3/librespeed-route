@@ -34,7 +34,7 @@ location.origin`, exactly these keys, and `id` matching `/^[A-Za-z0-9_-]{8,32}$/
 | page | `{ source: "librespeed-route-page", v: 1, type: "hello", id }` | is the extension here? Answered by the bridge, without the program |
 | page | `{ …, type: "trace", id }` | trace the route to my server |
 | page | `{ …, type: "cancel", id }` | give up; the program stops the tool |
-| extension | `{ source: "librespeed-route-extension", v: 1, type: "state", id, state, code? }` | `state` is `ready` (`id` is `""` for the one that the bridge posts when it loads), `tracing`, `done` or `error`; `code` is one of `not-allowed no-gesture busy no-host update refused no-tool failed silent interrupted too-long moved` |
+| extension | `{ source: "librespeed-route-extension", v: 1, type: "state", id, state, code? }` | `state` is `ready` (`id` is `""` for the one that the bridge posts when it loads), `off` (`id` is `""`; the person turned the site off while the page was open), `tracing`, `done` or `error`; `code` is one of `not-allowed no-gesture busy no-host update refused no-tool failed silent interrupted too-long moved` |
 | extension | `{ source: "librespeed-route-extension", v: 1, lsr1 }` | the route, as above; comes before `state: "done"` |
 
 What the extension requires before a trace that a page asked for (nothing of it is read from the message):

@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"image/png"
 	"os"
 	"path/filepath"
 	"testing"
@@ -94,5 +96,31 @@ func TestBuild(t *testing.T) {
 	}
 	if !found {
 		t.Error("no manifest in the zip")
+	}
+}
+
+// The icons of the extension are the favicon of the pages, in the four sizes that the manifests name, and they go into every build as they are
+func TestIconsAreThoseOfTheFolderAndTheRightSize(t *testing.T) {
+	root := filepath.Join("..", "..", "extension")
+	out := t.TempDir()
+	if err := build(root, out, "0.1.0", false, false); err != nil {
+		t.Fatal(err)
+	}
+	for _, size := range []int{16, 32, 48, 128} {
+		name := fmt.Sprintf("%d.png", size)
+		want, err := os.ReadFile(filepath.Join(root, "icons", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := png.DecodeConfig(bytes.NewReader(want))
+		if err != nil || cfg.Width != size || cfg.Height != size {
+			t.Fatalf("%s: %v %dx%d", name, err, cfg.Width, cfg.Height)
+		}
+		for _, b := range []string{"chromium", "firefox"} {
+			got, err := os.ReadFile(filepath.Join(out, b, "icons", name))
+			if err != nil || !bytes.Equal(got, want) {
+				t.Errorf("%s/%s: %v", b, name, err)
+			}
+		}
 	}
 }

@@ -408,6 +408,10 @@ test("turning a site off: a page that is already open is told not-allowed, and a
   );
   expect(answer).toEqual({ allowed: false });
   expect(await worker.evaluate(async () => (await chrome.storage.local.get("allowed")).allowed)).toEqual({});
+  // The page that is open is told that the site is off
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "", state: "off" });
   // The bridge is still in the page that was open, and the background refuses
   await page.click("#go");
   await expect
@@ -612,5 +616,29 @@ test("a page with an opaque origin (a sandbox) is not traced for", async () => {
   await page.click("#go");
   await page.waitForTimeout(1000);
   expect(fs.existsSync(pidFile)).toBe(false);
+  await context.close();
+});
+
+test("while a trace runs the icon counts the seconds in the red bubble of that tab, and is clean after, for the page and for the popup", async () => {
+  const { context, worker } = await launch({ withHost: true, delayMs: 2500 });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  const tabId = await tabIdOf(worker, "https://server.example/*");
+  const badge = () => worker.evaluate((id) => chrome.action.getBadgeText({ tabId: id }), tabId);
+  expect(await badge()).toBe("");
+  await page.click("#go");
+  await expect.poll(badge).toBe("0");
+  await expect.poll(badge, { timeout: 4000 }).toMatch(/^[12]$/);
+  expect(await worker.evaluate((id) => chrome.action.getBadgeBackgroundColor({ tabId: id }), tabId)).toEqual([217, 48, 37, 255]);
+  await expect.poll(async () => (await said(page)).some((m) => m.state === "done"), { timeout: 8000 }).toBe(true);
+  await expect.poll(badge).toBe("");
+  // The popup's trace counts too (another host name: the 30 seconds of the first do not count here)
+  const other = await openServer(context, "https://other.example");
+  const otherId = await tabIdOf(worker, "https://other.example/*");
+  const pending = worker.evaluate((id) => self.librespeedRoute.trace(id), otherId);
+  await expect.poll(() => worker.evaluate((id) => chrome.action.getBadgeText({ tabId: id }), otherId)).toMatch(/^[0-9]$/);
+  expect((await pending).state).toBe("done");
+  expect(await worker.evaluate((id) => chrome.action.getBadgeText({ tabId: id }), otherId)).toBe("");
+  await other.close();
   await context.close();
 });

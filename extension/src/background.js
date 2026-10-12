@@ -126,6 +126,37 @@
     });
   }
 
+  // The seconds that a trace has been running, counted on the icon of the extension for that tab (the red bubble), until it ends. Returns the
+  // function that stops it and clears the icon.
+  function startBadge(tabId) {
+    var started = Date.now();
+    var timer = null;
+    function draw() {
+      try {
+        api.action.setBadgeText({ tabId: tabId, text: String(Math.floor((Date.now() - started) / 1000)) });
+      } catch (error) {
+        // The tab is gone
+      }
+    }
+    try {
+      api.action.setBadgeBackgroundColor({ tabId: tabId, color: "#d93025" });
+    } catch (error) {
+      // The color is only a convenience
+    }
+    draw();
+    timer = setInterval(draw, 1000);
+    return function stop() {
+      if (timer === null) return;
+      clearInterval(timer);
+      timer = null;
+      try {
+        api.action.setBadgeText({ tabId: tabId, text: "" });
+      } catch (error) {
+        // The tab is gone
+      }
+    };
+  }
+
   // Is the program there, and which version of the protocol does it speak: "ok" with its version and tool, "no-host" or "update"
   function hello() {
     return ask({ v: 1, id: ident(), type: "hello" }).then(function (r) {
@@ -188,6 +219,7 @@
 
   // The trace itself: ask the host, and hand the line to the tab if it is still on the same origin
   function run(tabId, origin) {
+    var stopBadge = startBadge(tabId);
     return ask({ v: 1, id: ident(), type: "trace", origin: origin, family: 0 })
       .then(function (r) {
         if (r.error) return { state: "error", code: r.error, detail: r.detail };
@@ -212,10 +244,12 @@
       .then(
         function (result) {
           running = false;
+          stopBadge();
           return result;
         },
         function () {
           running = false;
+          stopBadge();
           return { state: "error", code: "failed" };
         },
       );
@@ -324,10 +358,37 @@
     });
   }
 
+  // The pages of the host that are open are told that the site is off (the button on the page goes off), while the extension can still reach them:
+  // once the permission is taken away it cannot
+  function tellOff(host) {
+    return api.tabs.query({ url: ["https://" + host + "/*"] }).then(function (tabs) {
+      return Promise.all(
+        (tabs || []).map(function (tab) {
+          var origin = originOf(tab.url);
+          if (!origin || safeHost(tab.url) !== host) return undefined;
+          return api.scripting
+            .executeScript({
+              target: { tabId: tab.id, frameIds: [0] },
+              func: function (to) {
+                window.postMessage({ source: "librespeed-route-extension", v: 1, type: "state", id: "", state: "off" }, to);
+              },
+              args: [origin],
+            })
+            .catch(function () {
+              // The tab went away
+            });
+        }),
+      );
+    });
+  }
+
   function revoke(host) {
     if (typeof host !== "string" || !HOSTNAME.test(host)) return Promise.resolve({ allowed: false });
-    return api.storage.local
-      .get("allowed")
+    return tellOff(host)
+      .catch(function () {})
+      .then(function () {
+        return api.storage.local.get("allowed");
+      })
       .then(function (stored) {
         var allowed = (stored && stored.allowed) || {};
         delete allowed[host];
@@ -361,16 +422,11 @@
     var cancel = null;
     var tabId = sender.tab.id;
     var host = "";
-    var badge = false;
+    var stopBadge = null;
 
     function endBadge() {
-      if (!badge) return;
-      badge = false;
-      try {
-        api.action.setBadgeText({ tabId: tabId, text: "" });
-      } catch (error) {
-        // The tab is gone
-      }
+      if (stopBadge) stopBadge();
+      stopBadge = null;
     }
 
     function answer(message) {
@@ -429,12 +485,7 @@
 
     function pageTrace(id, origin) {
       answer({ type: "state", state: "tracing" });
-      badge = true;
-      try {
-        api.action.setBadgeText({ tabId: id, text: "…" });
-      } catch (error) {
-        badge = false;
-      }
+      stopBadge = startBadge(id);
       return ask({ v: 1, id: ident(), type: "trace", origin: origin, family: 0 }, function (_port, stop) {
         cancel = stop;
         if (gone) stop();
