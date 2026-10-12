@@ -2,8 +2,10 @@ package install
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -32,6 +34,22 @@ func setup(t *testing.T, goos string) (Env, *bytes.Buffer) {
 		env.LocalAppData = filepath.Join(home, "AppData", "Local")
 	}
 	return env, &out
+}
+
+// jsonPath is a path as it is written inside a JSON string (the backslashes of a Windows path are doubled)
+func jsonPath(path string) string {
+	b, _ := json.Marshal(path)
+	return strings.Trim(string(b), `"`)
+}
+
+// pathOf is the "path" of a manifest
+func pathOf(t *testing.T, data []byte) string {
+	t.Helper()
+	var m Manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatalf("%v: %s", err, data)
+	}
+	return m.Path
 }
 
 func mkdir(t *testing.T, path ...string) {
@@ -86,15 +104,16 @@ func TestInstallOnLinuxWritesTheBrowsersThatAreUsed(t *testing.T) {
 	if err != nil || string(data) != "#!/bin/sh\necho the program\n" {
 		t.Fatalf("the program was not copied: %v %q", err, data)
 	}
-	if info, _ := os.Stat(program); info.Mode().Perm() != 0o755 {
+	// (Windows has no mode to keep: a file there is read and write for all)
+	if info, _ := os.Stat(program); runtime.GOOS != "windows" && info.Mode().Perm() != 0o755 {
 		t.Errorf("mode %v", info.Mode())
 	}
 	chrome, _ := os.ReadFile(filepath.Join(env.Home, ".config", "google-chrome", "NativeMessagingHosts", nativehost.HostName+".json"))
-	if string(chrome) != strings.Replace(wantChromium, "%s", program, 1) {
+	if string(chrome) != strings.Replace(wantChromium, "%s", jsonPath(program), 1) {
 		t.Errorf("chrome manifest:\n%s", chrome)
 	}
 	firefox, _ := os.ReadFile(filepath.Join(env.Home, ".mozilla", "native-messaging-hosts", nativehost.HostName+".json"))
-	if string(firefox) != strings.Replace(wantFirefox, "%s", program, 1) {
+	if string(firefox) != strings.Replace(wantFirefox, "%s", jsonPath(program), 1) {
 		t.Errorf("firefox manifest:\n%s", firefox)
 	}
 	// Edge and Chromium were not used: nothing for them
@@ -169,7 +188,7 @@ func TestInstallOnMac(t *testing.T) {
 		filepath.Join(app, "Mozilla", "NativeMessagingHosts", nativehost.HostName+".json"),
 	} {
 		data, err := os.ReadFile(f)
-		if err != nil || !strings.Contains(string(data), `"path": "`+program+`"`) {
+		if err != nil || pathOf(t, data) != program {
 			t.Errorf("%s: %v %s", f, err, data)
 		}
 	}
@@ -200,7 +219,7 @@ func TestInstallOnWindowsUsesTheRegistryOfTheUser(t *testing.T) {
 		}
 	}
 	data, _ := os.ReadFile(filepath.Join(dir, nativehost.HostName+".chromium.json"))
-	if !strings.Contains(string(data), filepath.Join(dir, "librespeed-route.exe")) || !strings.Contains(string(data), "allowed_origins") {
+	if pathOf(t, data) != filepath.Join(dir, "librespeed-route.exe") || !strings.Contains(string(data), "allowed_origins") {
 		t.Errorf("chromium manifest: %s", data)
 	}
 	if err := Uninstall(env); err != nil {
