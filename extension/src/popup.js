@@ -7,7 +7,12 @@
 
   var api = typeof browser !== "undefined" ? browser : chrome;
   var t = function (key, substitution) {
-    return api.i18n.getMessage(key, substitution === undefined ? undefined : [substitution]) || key;
+    return (
+      api.i18n.getMessage(
+        key,
+        substitution === undefined ? undefined : [substitution],
+      ) || key
+    );
   };
   var byId = function (id) {
     return document.getElementById(id);
@@ -36,7 +41,9 @@
     showDetail("");
     message.textContent = t(key, substitution);
     hint.hidden = !install;
-    byId("command").textContent = install ? "librespeed-route install-native-host" : "";
+    byId("command").textContent = install
+      ? "librespeed-route install-native-host"
+      : "";
     if (install) message.textContent = t(key) + " " + t("installHint");
   }
 
@@ -62,7 +69,10 @@
   // The button that a page of the site may have on its own: allowed here, one site at a time, by this click and the prompt of the browser
   function drawSite(allowed) {
     byId("site").hidden = false;
-    byId("sitetext").textContent = t(allowed ? "siteOnText" : "siteOffText", site.host);
+    byId("sitetext").textContent = t(
+      allowed ? "siteOnText" : "siteOffText",
+      site.host,
+    );
     byId("allow").hidden = allowed;
     byId("revoke").hidden = !allowed;
     byId("allow").disabled = false;
@@ -74,26 +84,31 @@
   }
 
   function start() {
-    return api.tabs.query({ active: true, currentWindow: true }).then(function (tabs) {
-      tabId = tabs && tabs[0] ? tabs[0].id : null;
-      if (typeof tabId !== "number") return show("stateNotHttps");
-      return Promise.all([ask({ type: "describe", tabId: tabId }), ask({ type: "hello" })]).then(function (both) {
-        var tab = both[0];
-        var host = both[1];
-        if (host.state === "no-host") {
-          show("stateNoHost", undefined, true);
-          return showDetail(host.detail);
-        }
-        if (host.state === "update") return show("stateOldHost");
-        if (!tab || !tab.origin) return show("stateNotHttps");
-        show("stateReady", tab.host);
-        trace.hidden = false;
-        if (tab.canAllow) {
-          site.host = tab.host;
-          drawSite(tab.allowed === true);
-        }
+    return api.tabs
+      .query({ active: true, currentWindow: true })
+      .then(function (tabs) {
+        tabId = tabs && tabs[0] ? tabs[0].id : null;
+        if (typeof tabId !== "number") return show("stateNotHttps");
+        return Promise.all([
+          ask({ type: "describe", tabId: tabId }),
+          ask({ type: "hello" }),
+        ]).then(function (both) {
+          var tab = both[0];
+          var host = both[1];
+          if (host.state === "no-host") {
+            show("stateNoHost", undefined, true);
+            return showDetail(host.detail);
+          }
+          if (host.state === "update") return show("stateOldHost");
+          if (!tab || !tab.origin) return show("stateNotHttps");
+          show("stateReady", tab.host);
+          trace.hidden = false;
+          if (tab.canAllow) {
+            site.host = tab.host;
+            drawSite(tab.allowed === true);
+          }
+        });
       });
-    });
   }
 
   trace.addEventListener("click", function () {
@@ -107,7 +122,11 @@
           result.hidden = false;
           trace.hidden = true;
         } else {
-          show(errors[answer && answer.code] || "errorFailed", undefined, answer && answer.code === "no-host");
+          show(
+            errors[answer && answer.code] || "errorFailed",
+            undefined,
+            answer && answer.code === "no-host",
+          );
           if (answer && answer.code === "no-host") showDetail(answer.detail);
           trace.disabled = false;
         }
@@ -136,6 +155,10 @@
     } catch (error) {
       asked = Promise.resolve(false);
     }
+    // Firefox leaves this popup open over the prompt that it just asked for, and the prompt is under it: the popup goes away, as the one of Chrome
+    // does by itself. The background already has what it needs (the intent, and the permission when it is given) to finish the job.
+    if (/Firefox\//.test(navigator.userAgent))
+      window.setTimeout(window.close.bind(window), 150);
     asked.then(
       function (granted) {
         if (!granted) {
