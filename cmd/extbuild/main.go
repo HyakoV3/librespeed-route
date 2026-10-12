@@ -40,7 +40,35 @@ type file struct {
 	data []byte
 }
 
+// versionOK says whether a version is one that the browsers take for an extension: 1 to 4 numbers separated by dots, each from 0 to 65535
+// ("0.2.1-dev" is not: Chrome refuses to load the extension)
+func versionOK(version string) bool {
+	parts := strings.Split(version, ".")
+	if len(parts) < 1 || len(parts) > 4 {
+		return false
+	}
+	for _, p := range parts {
+		if p == "" || len(p) > 5 || (len(p) > 1 && p[0] == '0') {
+			return false
+		}
+		n := 0
+		for _, c := range p {
+			if c < '0' || c > '9' {
+				return false
+			}
+			n = n*10 + int(c-'0')
+		}
+		if n > 65535 {
+			return false
+		}
+	}
+	return true
+}
+
 func build(root, out, version string, dev, doZip bool) error {
+	if !versionOK(version) {
+		return fmt.Errorf("the version %q is not one that a browser takes for an extension (1 to 4 numbers separated by dots, each up to 65535)", version)
+	}
 	var src []file
 	err := filepath.WalkDir(filepath.Join(root, "src"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
