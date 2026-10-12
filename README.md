@@ -9,6 +9,18 @@ JSON object for a script.
 
 **Status: 0.1, not released.** What is checked and what is not is at the end.
 
+## Install
+
+Download the archive for your system from the [releases](https://github.com/HyakoV3/librespeed-route/releases) (Windows: `.zip` with
+`librespeed-route.exe`; macOS and Linux: `.tar.gz` with `librespeed-route`; amd64 and arm64), unpack it and run it from a terminal. Each
+release has a `checksums.txt` (sha256). The binaries are **not signed**:
+
+- Windows: SmartScreen may warn the first time ("More info" → "Run anyway").
+- macOS: a file that was downloaded is quarantined; if it is refused, `xattr -d com.apple.quarantine librespeed-route` lets it run.
+- Linux: `chmod +x librespeed-route` if the archive did not keep the mode.
+
+Or build it: `go install github.com/HyakoV3/librespeed-route/cmd/librespeed-route@latest` (Go 1.26).
+
 ## Use
 
 ```
