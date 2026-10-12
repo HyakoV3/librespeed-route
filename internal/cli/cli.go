@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/HyakoV3/librespeed-route/internal/install"
 	"github.com/HyakoV3/librespeed-route/internal/route"
 )
 
@@ -41,11 +42,23 @@ type Env struct {
 	Run        func(ctx context.Context, spec route.Spec, opt route.Options) (route.Output, error)
 	Now        func() time.Time
 	Nonce      func() (string, error)
+	// Install is where the commands that install the host for the browsers work (the home of the user, the registry of Windows...)
+	Install install.Env
 }
 
 // SystemEnv is the real system.
 func SystemEnv(version string) Env {
+	exe, _ := os.Executable()
+	home, _ := os.UserHomeDir()
 	return Env{
+		Install: install.Env{
+			GOOS:         runtime.GOOS,
+			Home:         home,
+			LocalAppData: os.Getenv("LOCALAPPDATA"),
+			XDGDataHome:  os.Getenv("XDG_DATA_HOME"),
+			Exe:          exe,
+			Registry:     install.SystemRegistry{},
+		},
 		Version:    version,
 		GOOS:       runtime.GOOS,
 		SystemRoot: os.Getenv("SystemRoot"),
@@ -77,12 +90,62 @@ Usage: librespeed-route [options] HOST
 The table goes to stderr and one line of text for the page ("LSR1!...") to stdout, so "librespeed-route HOST | clip" copies only the
 line. Only public addresses are written in it: the ones of your internal network are left out. Only public addresses are traced.
 
+For the browser extension:
+  install-native-host [--all]   copy this program to a folder of your user and tell Chrome, Edge and Firefox (the ones that you have used;
+                                --all: every one) that the extension may start it. No administrator rights.
+  uninstall-native-host         take away what install-native-host wrote, and only that
+  doctor                        say what is where, and what would not work
+
 Exit codes: 0 ok, 1 usage, 2 the host cannot be traced, 3 no traceroute tool on this system, 4 failed, 130 interrupted.
 Options go before the host.
 `
 
+// subcommand runs install-native-host, uninstall-native-host and doctor (the first word of the arguments): the words are commands, not
+// host names.
+func subcommand(args []string, stdout, stderr io.Writer, env Env) (int, bool) {
+	switch args[0] {
+	case "install-native-host":
+		fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
+		fs.SetOutput(io.Discard)
+		all := fs.Bool("all", false, "")
+		if fs.Parse(args[1:]) != nil || fs.NArg() != 0 {
+			fmt.Fprint(stderr, usage)
+			return ExitUsage, true
+		}
+		e := env.Install
+		e.Out = stdout
+		if err := install.Install(e, *all); err != nil {
+			fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
+			return ExitFailed, true
+		}
+		return ExitOK, true
+	case "uninstall-native-host", "doctor":
+		if len(args) != 1 {
+			fmt.Fprint(stderr, usage)
+			return ExitUsage, true
+		}
+		e := env.Install
+		e.Out = stdout
+		run := install.Uninstall
+		if args[0] == "doctor" {
+			run = install.Doctor
+		}
+		if err := run(e); err != nil {
+			fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
+			return ExitFailed, true
+		}
+		return ExitOK, true
+	}
+	return 0, false
+}
+
 // Main runs the command and gives the exit code.
 func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env) int {
+	if len(args) >= 1 {
+		if code, done := subcommand(args, stdout, stderr, env); done {
+			return code
+		}
+	}
 	fs := flag.NewFlagSet("librespeed-route", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	four := fs.Bool("4", false, "")
@@ -163,11 +226,7 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 		fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
 		return ExitFailed
 	}
-	version := env.Version + "+" + spec.Tool
-	if len(version) > 16 {
-		version = version[:16]
-	}
-	text, lerr := route.EncodeLSR1(res, ip.String(), nonce, strings.TrimRight(version, "+-."), env.Now().Unix())
+	text, lerr := route.EncodeLSR1(res, ip.String(), nonce, route.VersionTag(env.Version, spec.Tool), env.Now().Unix())
 
 	if *asJSON {
 		doc := map[string]any{

@@ -100,3 +100,13 @@ func EncodeLSR1(res *Result, target, nonce, version string, now int64) (string, 
 	}
 	return "", ErrLSR1TooLong
 }
+
+// VersionTag is the "a" field: the version of the program and the tool that was run ("0.1.0+tracert"), up to 16 characters of
+// [0-9A-Za-z.+-].
+func VersionTag(version, tool string) string {
+	tag := version + "+" + tool
+	if len(tag) > 16 {
+		tag = tag[:16]
+	}
+	return strings.TrimRight(tag, "+-.")
+}

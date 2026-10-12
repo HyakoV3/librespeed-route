@@ -1,0 +1,11 @@
+{
+  "name": "librespeed-route-extension-tests",
+  "private": true,
+  "description": "End to end test of the extension (Chromium of Playwright, the real host built with -tags e2efake). Not part of the extension.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.59.1"
+  }
+}

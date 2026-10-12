@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+    <title></title>
+  </head>
+  <body>
+    <h1 id="title"></h1>
+    <p id="message" role="status" aria-live="polite"></p>
+    <p id="hint" hidden><code id="command"></code></p>
+    <button id="trace" type="button" hidden></button>
+    <div id="result" hidden>
+      <textarea id="line" readonly rows="4" aria-label="LSR1"></textarea>
+      <button id="copy" type="button"></button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

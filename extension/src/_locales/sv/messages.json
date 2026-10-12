@@ -1,0 +1,79 @@
+{
+  "extName": {
+    "message": "Väg tillbaka för LibreSpeed-sidor"
+  },
+  "extDescription": {
+    "message": "Spårar vägen från din dator till servern för sidan du är på, med traceroute i ditt eget system, och lämnar den till sidan. Adresserna i ditt interna nätverk lämnas utanför."
+  },
+  "actionTitle": {
+    "message": "Spåra vägen tillbaka till den här servern"
+  },
+  "popupTitle": {
+    "message": "Väg till den här servern"
+  },
+  "stateNoHost": {
+    "message": "Programmet librespeed-route är inte installerat, eller så kan webbläsaren inte starta det."
+  },
+  "installHint": {
+    "message": "Installera det och kör: librespeed-route install-native-host"
+  },
+  "stateOldHost": {
+    "message": "Programmet librespeed-route är för gammalt för det här tillägget: uppdatera det."
+  },
+  "stateNotHttps": {
+    "message": "Öppna en servers sida över https och klicka på ikonen där."
+  },
+  "stateReady": {
+    "message": "Spåra vägen från den här datorn till $host$.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "traceButton": {
+    "message": "Spåra"
+  },
+  "stateTracing": {
+    "message": "Spårar… det kan ta upp till två minuter."
+  },
+  "stateDone": {
+    "message": "Klart. Vägen lämnades till sidan, utan adresserna i ditt nätverk."
+  },
+  "stateNotDelivered": {
+    "message": "Sidan tog inte emot den. Kopiera raden och klistra in den på sidan."
+  },
+  "copyButton": {
+    "message": "Kopiera"
+  },
+  "copiedButton": {
+    "message": "Kopierat"
+  },
+  "errorRefused": {
+    "message": "Den här servern kan inte spåras (det är inte en offentlig adress)."
+  },
+  "errorNoTool": {
+    "message": "Varken tracert, traceroute eller tracepath hittades på den här datorn."
+  },
+  "errorFailed": {
+    "message": "Spårningen misslyckades."
+  },
+  "errorSilent": {
+    "message": "Ingen router svarade: nätverket kan släppa paketen."
+  },
+  "errorBusy": {
+    "message": "Vänta lite: en spårning i taget, och en per 30 sekunder för varje server."
+  },
+  "errorTooLong": {
+    "message": "Vägen ryms inte i raden för sidan."
+  },
+  "errorInterrupted": {
+    "message": "Spårningen stoppades."
+  },
+  "errorMoved": {
+    "message": "Du lämnade sidan; ingenting lämnades över."
+  },
+  "errorBadRequest": {
+    "message": "Tillägget och programmet förstår inte varandra: uppdatera båda."
+  }
+}

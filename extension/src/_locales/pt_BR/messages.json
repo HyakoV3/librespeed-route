@@ -1,0 +1,79 @@
+{
+  "extName": {
+    "message": "Rota de volta para páginas do LibreSpeed"
+  },
+  "extDescription": {
+    "message": "Traça a rota do seu computador até o servidor da página em que você está, com o traceroute do seu próprio sistema, e entrega à página. Os endereços da sua rede interna ficam de fora."
+  },
+  "actionTitle": {
+    "message": "Traçar a rota de volta para este servidor"
+  },
+  "popupTitle": {
+    "message": "Rota até este servidor"
+  },
+  "stateNoHost": {
+    "message": "O programa librespeed-route não está instalado, ou o navegador não consegue iniciá-lo."
+  },
+  "installHint": {
+    "message": "Instale-o e rode: librespeed-route install-native-host"
+  },
+  "stateOldHost": {
+    "message": "O programa librespeed-route é velho demais para esta extensão: atualize-o."
+  },
+  "stateNotHttps": {
+    "message": "Abra a página de um servidor por https e clique no ícone ali."
+  },
+  "stateReady": {
+    "message": "Traçar a rota deste computador até $host$.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "traceButton": {
+    "message": "Traçar"
+  },
+  "stateTracing": {
+    "message": "Traçando… pode levar até dois minutos."
+  },
+  "stateDone": {
+    "message": "Pronto. A rota foi entregue à página, sem os endereços da sua rede."
+  },
+  "stateNotDelivered": {
+    "message": "A página não recebeu. Copie a linha e cole na página."
+  },
+  "copyButton": {
+    "message": "Copiar"
+  },
+  "copiedButton": {
+    "message": "Copiado"
+  },
+  "errorRefused": {
+    "message": "Este servidor não pode ser traçado (não é um endereço público)."
+  },
+  "errorNoTool": {
+    "message": "Não foi encontrado tracert, traceroute nem tracepath neste computador."
+  },
+  "errorFailed": {
+    "message": "O traço falhou."
+  },
+  "errorSilent": {
+    "message": "Nenhum roteador respondeu: a rede pode estar descartando os pacotes."
+  },
+  "errorBusy": {
+    "message": "Espere um pouco: um traço por vez, e um a cada 30 segundos para cada servidor."
+  },
+  "errorTooLong": {
+    "message": "A rota não cabe na linha para a página."
+  },
+  "errorInterrupted": {
+    "message": "O traço foi interrompido."
+  },
+  "errorMoved": {
+    "message": "Você saiu da página; nada foi entregue."
+  },
+  "errorBadRequest": {
+    "message": "A extensão e o programa não se entendem: atualize os dois."
+  }
+}

@@ -2,3 +2,7 @@
 /librespeed-route
 /librespeed-route.exe
 *.test
+node_modules/
+extension/node_modules/
+extension/test-results/
+/extension-dist/

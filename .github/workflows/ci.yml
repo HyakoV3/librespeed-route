@@ -50,3 +50,32 @@ jobs:
           # The command refuses non-public addresses on purpose: the exit code 2 is the answer
           ./librespeed-route 127.0.0.1 || test $? -eq 2
           ./librespeed-route --version
+
+  extension:
+    # The extension in the Chromium of Playwright, with the real program built with -tags e2efake (no network)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: The extension builds, and the zip is the same bytes twice
+        run: |
+          go run ./cmd/extbuild -version 0.0.1 -zip -out /tmp/a
+          go run ./cmd/extbuild -version 0.0.1 -zip -out /tmp/b
+          cmp /tmp/a/librespeed-route-extension-chromium-0.0.1.zip /tmp/b/librespeed-route-extension-chromium-0.0.1.zip
+          cmp /tmp/a/librespeed-route-extension-firefox-0.0.1.zip /tmp/b/librespeed-route-extension-firefox-0.0.1.zip
+          # The zip for the store has no development key
+          ! unzip -p /tmp/a/librespeed-route-extension-chromium-0.0.1.zip manifest.json | grep -q '"key"'
+      - name: Install the browser and the test tools
+        working-directory: extension
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: End to end
+        working-directory: extension
+        run: npx playwright test

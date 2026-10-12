@@ -70,10 +70,31 @@ input.
   vectors (`testdata/vectors`), and a test runs the page's own parser with Node over 2000 outputs made at random and compares the two.
   `testdata/PIN` says which version of the page file is the one.
 
+## Browser extension (in development, not published)
+
+`extension/` is a browser extension for Chrome, Edge and Firefox that traces the route **to the server of the page you are on** with one click on
+its icon, using this program, and hands the line to the page. It is built from the same repository because the two halves speak one protocol
+(`docs/protocol.md`). It has no content script and no permission for any site: only the button of the person starts a trace, and the target is
+the address of the tab.
+
+To try it on your computer (no store involved):
+
+```
+go build -o librespeed-route ./cmd/librespeed-route
+./librespeed-route install-native-host          # tells Chrome, Edge and Firefox that the extension may start it
+go run ./cmd/extbuild -dev -version 0.1.0 -out dist/extension
+```
+
+then Chrome/Edge: `chrome://extensions` → Developer mode → "Load unpacked" → `dist/extension/chromium` (its id is
+`gcgijalhbacnoacnklibiffbacdchjgm`, the one that the program lets in); Firefox: `about:debugging` → "This Firefox" → "Load Temporary Add-on" →
+`dist/extension/firefox/manifest.json`. Open the route page of a server (https), click the icon, press "Trace". The popup also shows the line
+(with a Copy button), which the page reads when pasted. `./librespeed-route doctor` says what is where, and `uninstall-native-host` takes it away.
+
 ## Development
 
 ```
 go vet ./... && go test ./...
+(cd extension && npm ci && npx playwright install chromium && npx playwright test)   # the extension in a browser, with the real program (-tags e2efake)
 LSROUTE_LIVE=1 go test -run Loopback -v ./internal/route/    # the real tool of the system, on 127.0.0.1
 ```
 

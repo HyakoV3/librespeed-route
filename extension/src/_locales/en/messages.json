@@ -1,0 +1,79 @@
+{
+  "extName": {
+    "message": "Route back for LibreSpeed pages"
+  },
+  "extDescription": {
+    "message": "Traces the route from your computer to the server of the page you are on, with the traceroute of your own system, and hands it to the page. The addresses of your own network are left out."
+  },
+  "actionTitle": {
+    "message": "Trace the route back to this server"
+  },
+  "popupTitle": {
+    "message": "Route to this server"
+  },
+  "stateNoHost": {
+    "message": "The program librespeed-route is not installed, or the browser cannot start it."
+  },
+  "installHint": {
+    "message": "Install it, then run: librespeed-route install-native-host"
+  },
+  "stateOldHost": {
+    "message": "The program librespeed-route is too old for this extension: update it."
+  },
+  "stateNotHttps": {
+    "message": "Open the page of a server over https and click the icon there."
+  },
+  "stateReady": {
+    "message": "Trace the route from this computer to $host$.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "traceButton": {
+    "message": "Trace"
+  },
+  "stateTracing": {
+    "message": "Tracing… this can take up to two minutes."
+  },
+  "stateDone": {
+    "message": "Done. The route was handed to the page, without the addresses of your network."
+  },
+  "stateNotDelivered": {
+    "message": "The page did not take it. Copy the line and paste it in the page."
+  },
+  "copyButton": {
+    "message": "Copy"
+  },
+  "copiedButton": {
+    "message": "Copied"
+  },
+  "errorRefused": {
+    "message": "This server cannot be traced (it is not a public address)."
+  },
+  "errorNoTool": {
+    "message": "No tracert, traceroute or tracepath was found on this computer."
+  },
+  "errorFailed": {
+    "message": "The trace failed."
+  },
+  "errorSilent": {
+    "message": "No router answered: the network may be dropping the packets."
+  },
+  "errorBusy": {
+    "message": "Wait a little: one trace at a time, and one in 30 seconds for each server."
+  },
+  "errorTooLong": {
+    "message": "The route does not fit in the line for the page."
+  },
+  "errorInterrupted": {
+    "message": "The trace was stopped."
+  },
+  "errorMoved": {
+    "message": "You left the page; nothing was handed over."
+  },
+  "errorBadRequest": {
+    "message": "The extension and the program do not understand each other: update both."
+  }
+}

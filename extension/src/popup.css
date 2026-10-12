@@ -1,0 +1,82 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #555555;
+  --border: #c8c8c8;
+  --button: #0b57d0;
+  --button-text: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e;
+    --text: #eeeeee;
+    --muted: #b0b0b0;
+    --border: #555555;
+    --button: #8ab4f8;
+    --button-text: #0b1b33;
+  }
+}
+
+body {
+  box-sizing: border-box;
+  width: 320px;
+  padding: 12px 14px;
+  margin: 0;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+p {
+  margin: 0 0 10px;
+}
+
+code {
+  padding: 2px 4px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+button {
+  min-height: 36px;
+  padding: 4px 14px;
+  font: inherit;
+  color: var(--button-text);
+  cursor: pointer;
+  background: var(--button);
+  border: 0;
+  border-radius: 6px;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 8px;
+  font:
+    12px/1.3 ui-monospace,
+    monospace;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}

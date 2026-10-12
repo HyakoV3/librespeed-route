@@ -1,0 +1,79 @@
+{
+  "extName": {
+    "message": "Ruta de vuelta para páginas de LibreSpeed"
+  },
+  "extDescription": {
+    "message": "Traza la ruta desde tu ordenador hasta el servidor de la página en la que estás, con el traceroute de tu propio sistema, y se la entrega a la página. Las direcciones de tu red interna quedan fuera."
+  },
+  "actionTitle": {
+    "message": "Trazar la ruta de vuelta a este servidor"
+  },
+  "popupTitle": {
+    "message": "Ruta a este servidor"
+  },
+  "stateNoHost": {
+    "message": "El programa librespeed-route no está instalado, o el navegador no puede iniciarlo."
+  },
+  "installHint": {
+    "message": "Instálalo y ejecuta: librespeed-route install-native-host"
+  },
+  "stateOldHost": {
+    "message": "El programa librespeed-route es demasiado antiguo para esta extensión: actualízalo."
+  },
+  "stateNotHttps": {
+    "message": "Abre la página de un servidor por https y pulsa el icono allí."
+  },
+  "stateReady": {
+    "message": "Trazar la ruta de este ordenador a $host$.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "traceButton": {
+    "message": "Trazar"
+  },
+  "stateTracing": {
+    "message": "Trazando… puede tardar hasta dos minutos."
+  },
+  "stateDone": {
+    "message": "Listo. La ruta se entregó a la página, sin las direcciones de tu red."
+  },
+  "stateNotDelivered": {
+    "message": "La página no la recibió. Copia la línea y pégala en la página."
+  },
+  "copyButton": {
+    "message": "Copiar"
+  },
+  "copiedButton": {
+    "message": "Copiado"
+  },
+  "errorRefused": {
+    "message": "Este servidor no se puede trazar (no es una dirección pública)."
+  },
+  "errorNoTool": {
+    "message": "No se encontró tracert, traceroute ni tracepath en este ordenador."
+  },
+  "errorFailed": {
+    "message": "La traza falló."
+  },
+  "errorSilent": {
+    "message": "Ningún router respondió: la red puede estar descartando los paquetes."
+  },
+  "errorBusy": {
+    "message": "Espera un poco: una traza a la vez, y una cada 30 segundos por servidor."
+  },
+  "errorTooLong": {
+    "message": "La ruta no cabe en la línea para la página."
+  },
+  "errorInterrupted": {
+    "message": "La traza se detuvo."
+  },
+  "errorMoved": {
+    "message": "Saliste de la página; no se entregó nada."
+  },
+  "errorBadRequest": {
+    "message": "La extensión y el programa no se entienden: actualiza los dos."
+  }
+}

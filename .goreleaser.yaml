@@ -23,3 +23,7 @@ archives:
       - README.md
 checksum:
   name_template: checksums.txt
+release:
+  # The two zips of the extension are built before (go run ./cmd/extbuild -zip -out extension-dist), from the same tag
+  extra_files:
+    - glob: extension-dist/*.zip
