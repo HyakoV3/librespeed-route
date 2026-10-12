@@ -40,6 +40,12 @@ p {
   margin: 0 0 10px;
 }
 
+#detail {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 code {
   padding: 2px 4px;
   overflow-wrap: anywhere;

@@ -92,6 +92,11 @@ func ProgramDir(env Env) string {
 	return filepath.Join(base, "librespeed-route")
 }
 
+// manifestFile is where the manifest of a family is kept on Windows (the registry points at it)
+func manifestFile(dir, family string) string {
+	return filepath.Join(dir, family, nativehost.HostName+".json")
+}
+
 func binaryName(goos string) string {
 	if goos == "windows" {
 		return "librespeed-route.exe"
@@ -176,7 +181,9 @@ func Install(env Env, all bool) error {
 			return err
 		}
 		if env.GOOS == "windows" {
-			file := filepath.Join(dir, nativehost.HostName+"."+b.Family+".json")
+			// The name of the file is always the one of the host: Firefox gives the path of the manifest to the program, which only takes
+			// a manifest of that name, so each family has a folder of its own
+			file := manifestFile(dir, b.Family)
 			if err := writeFile(file, data, 0o600); err != nil {
 				return err
 			}
@@ -232,9 +239,15 @@ func Uninstall(env Env) error {
 			fmt.Fprintf(env.Out, "removed %s\n", file)
 		}
 	}
-	for _, name := range []string{binaryName(env.GOOS), nativehost.HostName + ".chromium.json", nativehost.HostName + ".firefox.json"} {
-		if err := os.Remove(filepath.Join(dir, name)); err == nil {
-			fmt.Fprintf(env.Out, "removed %s\n", filepath.Join(dir, name))
+	// What was written: the program, the manifests of Windows (and the folders of them), and the files of the first version, which had other names
+	for _, path := range []string{
+		filepath.Join(dir, binaryName(env.GOOS)),
+		manifestFile(dir, "chromium"), manifestFile(dir, "firefox"),
+		filepath.Join(dir, nativehost.HostName+".chromium.json"), filepath.Join(dir, nativehost.HostName+".firefox.json"),
+		filepath.Join(dir, "chromium"), filepath.Join(dir, "firefox"),
+	} {
+		if err := os.Remove(path); err == nil {
+			fmt.Fprintf(env.Out, "removed %s\n", path)
 		}
 	}
 	if err := os.Remove(dir); err == nil {

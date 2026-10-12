@@ -83,10 +83,12 @@
         finish({ reply: reply });
       });
       port.onDisconnect.addListener(function () {
-        // The host is not there (not installed, or the browser may not start it), or it ended without answering
+        // The host is not there (not installed, the browser may not start it, or this extension is not one that the program lets in), or
+        // it ended without answering. What the browser says about it is kept, to be shown (it is the text of the browser, not of a page)
+        var problem = api.runtime.lastError && api.runtime.lastError.message;
         if (!done) {
           done = true;
-          resolve({ error: "no-host" });
+          resolve({ error: "no-host", detail: String(problem || "") + " [extension id " + api.runtime.id + "]" });
         }
       });
       if (onPort) onPort(port);
@@ -97,7 +99,7 @@
   // Is the program there, and which version of the protocol does it speak: "ok" with its version and tool, "no-host" or "update"
   function hello() {
     return ask({ v: 1, id: id(), type: "hello" }).then(function (r) {
-      if (r.error) return { state: r.error };
+      if (r.error) return { state: r.error, detail: r.detail };
       var m = r.reply;
       if (!m || m.type !== "hello" || m.protocol !== PROTOCOL) return { state: "update" };
       return { state: "ok", version: String(m.version || ""), tool: String(m.tool || "") };
@@ -151,7 +153,7 @@
   function run(tabId, origin) {
     return ask({ v: 1, id: id(), type: "trace", origin: origin, family: 0 })
       .then(function (r) {
-        if (r.error) return { state: "error", code: r.error };
+        if (r.error) return { state: "error", code: r.error, detail: r.detail };
         var m = r.reply;
         if (!m || m.type === "error")
           return { state: "error", code: m && typeof m.code === "string" ? m.code : "failed" };

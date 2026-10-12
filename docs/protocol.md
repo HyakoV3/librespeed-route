@@ -64,7 +64,7 @@ one). The `--json` of the command has the real addresses of the internal network
 `librespeed-route install-native-host [--all]` copies the program to a folder of the user and writes one manifest per browser family:
 Linux `~/.config/{google-chrome,chromium,microsoft-edge}/NativeMessagingHosts/` and `~/.mozilla/native-messaging-hosts/`; macOS
 `~/Library/Application Support/{Google/Chrome,Chromium,Microsoft Edge,Mozilla}/NativeMessagingHosts/`; Windows the files in
-`%LOCALAPPDATA%\librespeed-route\` and the keys `HKCU\Software\{Google\Chrome,Chromium,Microsoft\Edge,Mozilla}\NativeMessagingHosts\<name>`.
+`%LOCALAPPDATA%\librespeed-route\chromium\` and `...\firefox\` (always named like the host, because Firefox gives the path of the manifest to the program and the program takes only that name) and the keys `HKCU\Software\{Google\Chrome,Chromium,Microsoft\Edge,Mozilla}\NativeMessagingHosts\<name>`.
 Only the browsers that have been used get a manifest (`--all`: every one). `uninstall-native-host` removes what was written and only that;
 `doctor` says what is where. On Windows a folder with `% " ^ & !` is refused (cmd.exe starts the host of a Chromium browser). Browsers in a
 snap or a flatpak are not supported.

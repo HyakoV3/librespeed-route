@@ -185,11 +185,14 @@ test("without the program the extension says so, in hello and in a trace", async
   const { context, worker } = await launch({ withHost: false });
   await openServer(context);
   const tabId = await tabIdOf(worker, "https://server.example/*");
-  expect(await worker.evaluate(() => self.librespeedRoute.hello())).toEqual({ state: "no-host" });
-  expect(await worker.evaluate((id) => self.librespeedRoute.trace(id), tabId)).toEqual({
-    state: "error",
-    code: "no-host",
-  });
+  const hello = await worker.evaluate(() => self.librespeedRoute.hello());
+  expect(hello.state).toBe("no-host");
+  // The popup can show what the browser said, and the id of the extension (to compare with the one that the program lets in)
+  expect(hello.detail).toContain(`[extension id ${DEV_ID}]`);
+  expect(hello.detail.length).toBeGreaterThan(`[extension id ${DEV_ID}]`.length);
+  const traced = await worker.evaluate((id) => self.librespeedRoute.trace(id), tabId);
+  expect(traced).toMatchObject({ state: "error", code: "no-host" });
+  expect(traced.detail).toContain(DEV_ID);
   await context.close();
 });
 

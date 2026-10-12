@@ -205,10 +205,10 @@ func TestInstallOnWindowsUsesTheRegistryOfTheUser(t *testing.T) {
 	}
 	dir := filepath.Join(env.LocalAppData, "librespeed-route")
 	want := map[string]string{
-		`Software\Google\Chrome\NativeMessagingHosts\` + nativehost.HostName:  filepath.Join(dir, nativehost.HostName+".chromium.json"),
-		`Software\Chromium\NativeMessagingHosts\` + nativehost.HostName:       filepath.Join(dir, nativehost.HostName+".chromium.json"),
-		`Software\Microsoft\Edge\NativeMessagingHosts\` + nativehost.HostName: filepath.Join(dir, nativehost.HostName+".chromium.json"),
-		`Software\Mozilla\NativeMessagingHosts\` + nativehost.HostName:        filepath.Join(dir, nativehost.HostName+".firefox.json"),
+		`Software\Google\Chrome\NativeMessagingHosts\` + nativehost.HostName:  filepath.Join(dir, "chromium", nativehost.HostName+".json"),
+		`Software\Chromium\NativeMessagingHosts\` + nativehost.HostName:       filepath.Join(dir, "chromium", nativehost.HostName+".json"),
+		`Software\Microsoft\Edge\NativeMessagingHosts\` + nativehost.HostName: filepath.Join(dir, "chromium", nativehost.HostName+".json"),
+		`Software\Mozilla\NativeMessagingHosts\` + nativehost.HostName:        filepath.Join(dir, "firefox", nativehost.HostName+".json"),
 	}
 	if len(reg) != len(want) {
 		t.Errorf("keys: %v", reg)
@@ -218,7 +218,7 @@ func TestInstallOnWindowsUsesTheRegistryOfTheUser(t *testing.T) {
 			t.Errorf("%s = %q, want %q", k, reg[k], v)
 		}
 	}
-	data, _ := os.ReadFile(filepath.Join(dir, nativehost.HostName+".chromium.json"))
+	data, _ := os.ReadFile(filepath.Join(dir, "chromium", nativehost.HostName+".json"))
 	if pathOf(t, data) != filepath.Join(dir, "librespeed-route.exe") || !strings.Contains(string(data), "allowed_origins") {
 		t.Errorf("chromium manifest: %s", data)
 	}
@@ -284,5 +284,33 @@ func TestUninstallLeavesWhatIsNotItsOwn(t *testing.T) {
 	}
 	if !exists(mine) || exists(filepath.Join(dir, "librespeed-route")) {
 		t.Errorf("notes: %v, program: %v", exists(mine), exists(filepath.Join(dir, "librespeed-route")))
+	}
+}
+
+// What the installer writes for Firefox on Windows is what the host takes: Firefox starts the program with the path of the manifest (the
+// one of the registry) and the id of the extension, and the program lets in only a manifest of the name of the host
+func TestTheFirefoxManifestOfWindowsIsOneThatTheHostTakes(t *testing.T) {
+	env, _ := setup(t, "windows")
+	reg := env.Registry.(fakeRegistry)
+	if err := Install(env, false); err != nil {
+		t.Fatal(err)
+	}
+	key := `Software\Mozilla\NativeMessagingHosts\` + nativehost.HostName
+	manifest := reg[key]
+	if manifest == "" {
+		t.Fatalf("no key for Firefox: %v", reg)
+	}
+	// The path as Windows gives it (with drive and backslashes), whatever system the test runs on
+	asWindows := `C:\Users\u\AppData\Local\librespeed-route\firefox\` + filepath.Base(manifest)
+	if !nativehost.CheckCaller([]string{asWindows, nativehost.GeckoIDs[0]}, "windows", nativehost.ChromeIDs, nativehost.GeckoIDs) {
+		t.Errorf("the host does not take %s", asWindows)
+	}
+	if filepath.Base(manifest) != nativehost.HostName+".json" {
+		t.Errorf("the manifest of Firefox is called %s", filepath.Base(manifest))
+	}
+	// and the same for Chromium (the browsers that read the registry take any name, but one rule is simpler)
+	chromium := reg[`Software\Google\Chrome\NativeMessagingHosts\`+nativehost.HostName]
+	if filepath.Base(chromium) != nativehost.HostName+".json" {
+		t.Errorf("the manifest of Chromium is called %s", filepath.Base(chromium))
 	}
 }

@@ -23,7 +23,16 @@
   trace.textContent = t("traceButton");
   byId("copy").textContent = t("copyButton");
 
+  var detail = byId("detail");
+
+  // What the browser said when it could not start the program (shown as text, small, under the message)
+  function showDetail(text) {
+    detail.textContent = text || "";
+    detail.hidden = !text;
+  }
+
   function show(key, substitution, install) {
+    showDetail("");
     message.textContent = t(key, substitution);
     hint.hidden = !install;
     byId("command").textContent = install ? "librespeed-route install-native-host" : "";
@@ -56,7 +65,10 @@
       return Promise.all([ask({ type: "describe", tabId: tabId }), ask({ type: "hello" })]).then(function (both) {
         var tab = both[0];
         var host = both[1];
-        if (host.state === "no-host") return show("stateNoHost", undefined, true);
+        if (host.state === "no-host") {
+          show("stateNoHost", undefined, true);
+          return showDetail(host.detail);
+        }
         if (host.state === "update") return show("stateOldHost");
         if (!tab || !tab.origin) return show("stateNotHttps");
         show("stateReady", tab.host);
@@ -77,6 +89,7 @@
           trace.hidden = true;
         } else {
           show(errors[answer && answer.code] || "errorFailed", undefined, answer && answer.code === "no-host");
+          if (answer && answer.code === "no-host") showDetail(answer.detail);
           trace.disabled = false;
         }
       },
