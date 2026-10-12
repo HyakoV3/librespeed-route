@@ -71,6 +71,9 @@ jobs:
           cmp /tmp/a/librespeed-route-extension-firefox-0.0.1.zip /tmp/b/librespeed-route-extension-firefox-0.0.1.zip
           # The zip for the store has no development key
           ! unzip -p /tmp/a/librespeed-route-extension-chromium-0.0.1.zip manifest.json | grep -q '"key"'
+          # The one to load from a folder has it, and says so in its name
+          go run ./cmd/extbuild -dev -version 0.0.1 -zip -out /tmp/c
+          unzip -p /tmp/c/librespeed-route-extension-chromium-sideload-0.0.1.zip manifest.json | grep -q '"key"'
       - name: Install the browser and the test tools
         working-directory: extension
         run: |

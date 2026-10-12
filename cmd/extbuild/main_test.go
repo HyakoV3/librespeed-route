@@ -32,6 +32,25 @@ func TestBuild(t *testing.T) {
 	if err := build(filepath.Join("..", "..", "extension"), out, "0.2.1", true, true); err != nil {
 		t.Fatal(err)
 	}
+	// The zip of a development build says so in its name, and has the key; the one of the store does not (below)
+	sideload, err := zip.OpenReader(filepath.Join(out, "librespeed-route-extension-chromium-sideload-0.2.1.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hasKey := false
+	for _, f := range sideload.File {
+		if f.Name == "manifest.json" {
+			rc, _ := f.Open()
+			var buf bytes.Buffer
+			_, _ = buf.ReadFrom(rc)
+			rc.Close()
+			hasKey = bytes.Contains(buf.Bytes(), []byte(`"key"`))
+		}
+	}
+	sideload.Close()
+	if !hasKey {
+		t.Error("the sideload zip has no key")
+	}
 	for _, b := range []string{"chromium", "firefox"} {
 		data, err := os.ReadFile(filepath.Join(out, b, "manifest.json"))
 		if err != nil {

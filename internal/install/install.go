@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/HyakoV3/librespeed-route/internal/i18n"
 	"github.com/HyakoV3/librespeed-route/internal/nativehost"
 )
 
@@ -33,6 +34,7 @@ type Env struct {
 	Exe          string // the program that is running, to copy
 	Registry     Registry
 	Out          io.Writer
+	Lang         i18n.Lang // the language of what it says (English when empty)
 }
 
 type browser struct {
@@ -168,11 +170,11 @@ func Install(env Env, all bool) error {
 		return ErrPath
 	}
 	if env.Exe == "" {
-		return errors.New("the path of the running program is not known")
+		return errors.New(env.Lang.T("inst.no-exe"))
 	}
 	program := filepath.Join(dir, binaryName(env.GOOS))
 	if err := copyFile(env.Exe, program); err != nil {
-		return fmt.Errorf("copying the program: %w", err)
+		return errors.New(env.Lang.T("inst.copying", err))
 	}
 	wrote := 0
 	for _, b := range browsers(env) {
@@ -191,14 +193,14 @@ func Install(env Env, all bool) error {
 				return errors.New("no registry")
 			}
 			if err := env.Registry.Set(b.Key, file); err != nil {
-				return fmt.Errorf("registry %s: %w", b.Key, err)
+				return errors.New(env.Lang.T("inst.registry", b.Key, err))
 			}
 			fmt.Fprintf(env.Out, "%s: HKCU\\%s -> %s\n", b.Name, b.Key, file)
 			wrote++
 			continue
 		}
 		if _, err := os.Stat(b.Root); err != nil && !all {
-			fmt.Fprintf(env.Out, "%s: not used on this computer (nothing written; --all writes it anyway)\n", b.Name)
+			fmt.Fprint(env.Out, env.Lang.T("inst.not-used", b.Name))
 			continue
 		}
 		file := filepath.Join(b.Dir, nativehost.HostName+".json")
@@ -208,12 +210,12 @@ func Install(env Env, all bool) error {
 		fmt.Fprintf(env.Out, "%s: %s\n", b.Name, file)
 		wrote++
 	}
-	fmt.Fprintf(env.Out, "The program is in %s\n", program)
+	fmt.Fprint(env.Out, env.Lang.T("inst.program-in", program))
 	if wrote == 0 {
-		fmt.Fprintln(env.Out, "No browser was found: open Chrome, Edge or Firefox once and run this again, or use --all.")
+		fmt.Fprint(env.Out, env.Lang.T("inst.no-browser"))
 	}
 	if env.GOOS == "darwin" {
-		fmt.Fprintf(env.Out, "If the browser cannot start it (a file that was downloaded is quarantined): xattr -d com.apple.quarantine %q\n", program)
+		fmt.Fprint(env.Out, env.Lang.T("inst.quarantine", program))
 	}
 	return nil
 }
@@ -229,14 +231,14 @@ func Uninstall(env Env) error {
 					if err := env.Registry.Delete(b.Key); err != nil {
 						return err
 					}
-					fmt.Fprintf(env.Out, "removed HKCU\\%s\n", b.Key)
+					fmt.Fprint(env.Out, env.Lang.T("uninst.removed", `HKCU\`+b.Key))
 				}
 			}
 			continue
 		}
 		file := filepath.Join(b.Dir, nativehost.HostName+".json")
 		if err := os.Remove(file); err == nil {
-			fmt.Fprintf(env.Out, "removed %s\n", file)
+			fmt.Fprint(env.Out, env.Lang.T("uninst.removed", file))
 		}
 	}
 	// What was written: the program, the manifests of Windows (and the folders of them), and the files of the first version, which had other names
@@ -247,11 +249,11 @@ func Uninstall(env Env) error {
 		filepath.Join(dir, "chromium"), filepath.Join(dir, "firefox"),
 	} {
 		if err := os.Remove(path); err == nil {
-			fmt.Fprintf(env.Out, "removed %s\n", path)
+			fmt.Fprint(env.Out, env.Lang.T("uninst.removed", path))
 		}
 	}
 	if err := os.Remove(dir); err == nil {
-		fmt.Fprintf(env.Out, "removed %s\n", dir)
+		fmt.Fprint(env.Out, env.Lang.T("uninst.removed", dir))
 	}
 	return nil
 }
@@ -261,7 +263,11 @@ func Doctor(env Env) error {
 	dir := ProgramDir(env)
 	program := filepath.Join(dir, binaryName(env.GOOS))
 	_, perr := os.Stat(program)
-	fmt.Fprintf(env.Out, "program: %s (%s)\n", program, map[bool]string{true: "there", false: "not there: run install-native-host"}[perr == nil])
+	there := env.Lang.T("doctor.not-there")
+	if perr == nil {
+		there = env.Lang.T("doctor.there")
+	}
+	fmt.Fprint(env.Out, env.Lang.T("doctor.program", program, there))
 	problems := 0
 	names := []string{}
 	lines := map[string]string{}
@@ -278,13 +284,13 @@ func Doctor(env Env) error {
 			where = filepath.Join(b.Dir, nativehost.HostName+".json")
 			pointsAt = manifestPath(where)
 		}
-		state := "no manifest"
+		state := env.Lang.T("doctor.no-manifest")
 		if pointsAt != "" {
 			if _, err := os.Stat(pointsAt); err != nil {
-				state = "points at " + pointsAt + ", which is not there"
+				state = env.Lang.T("doctor.points-at", pointsAt)
 				problems++
 			} else {
-				state = "ok -> " + pointsAt
+				state = env.Lang.T("doctor.ok", pointsAt)
 			}
 		}
 		names = append(names, b.Name)
@@ -295,14 +301,14 @@ func Doctor(env Env) error {
 		fmt.Fprint(env.Out, lines[n])
 	}
 	for _, p := range containerBrowsers(env) {
-		fmt.Fprintf(env.Out, "warning: %s: a browser in a snap or flatpak cannot start a program of the user; it is not supported\n", p)
+		fmt.Fprint(env.Out, env.Lang.T("doctor.container", p))
 		problems++
 	}
 	if env.GOOS == "darwin" {
-		fmt.Fprintf(env.Out, "macOS: if the browser cannot start the program, clear the quarantine: xattr -d com.apple.quarantine %q\n", program)
+		fmt.Fprint(env.Out, env.Lang.T("doctor.quarantine", program))
 	}
 	if problems > 0 {
-		return fmt.Errorf("%d problem(s)", problems)
+		return errors.New(env.Lang.T("doctor.problems", problems))
 	}
 	return nil
 }

@@ -1,27 +1,71 @@
 # librespeed-route
 
-Traces the route from **your computer** to a server, with the tool your system already has, and writes the result in the text that the
-route page of [better pages of LibreSpeed](https://github.com/HyakoV3/speedtest) (`route-better.html`, "You → server") reads.
+Traces the route from **your computer** to a server, with the tool your system already has (`tracert` on Windows, `traceroute` on macOS and
+Linux, `tracepath` when there is no `traceroute`), and hands it to the route page of the
+[better pages of LibreSpeed](https://github.com/HyakoV3/speedtest) (`route-better.html`, "You → server"): the path **your** traffic takes to
+that server, which a web page cannot measure by itself.
 
-It does not send probes of its own. It runs `tracert` (Windows), `traceroute` (macOS, Linux) or `tracepath` (Linux, when there is no
-`traceroute`), reads what they print and does three things with it: a table for you, a line of text for the page, and (with `--json`) a
-JSON object for a script.
+It does not send probes of its own. There are two ways to use it:
 
-**Status: 0.1, not released.** What is checked and what is not is at the end.
+- **With the browser extension** (Chrome, Edge, Firefox): on the page of a server, click the icon of the extension and press **Trace**; the
+  route appears on the page by itself. [Quick start](#quick-start-the-browser-extension).
+- **From a terminal**: `librespeed-route HOST` prints a table for you and one line of text for the page (and `--json` for a script).
+  [The command line](#the-command-line).
 
-## Install
+Only **public** addresses ever leave the program: the addresses of your own network (a hop of your router, of your provider's CGNAT) are
+replaced by a mark, and the page only learns how long each took.
 
-Download the archive for your system from the [releases](https://github.com/HyakoV3/librespeed-route/releases) (Windows: `.zip` with
-`librespeed-route.exe`; macOS and Linux: `.tar.gz` with `librespeed-route`; amd64 and arm64), unpack it and run it from a terminal. Each
-release has a `checksums.txt` (sha256). The binaries are **not signed**:
+## Quick start: the browser extension
 
-- Windows: SmartScreen may warn the first time ("More info" → "Run anyway").
-- macOS: a file that was downloaded is quarantined; if it is refused, `xattr -d com.apple.quarantine librespeed-route` lets it run.
-- Linux: `chmod +x librespeed-route` if the archive did not keep the mode.
+Tried by hand on Windows 11, with Firefox and with Chrome. (macOS, Linux and Edge: see [what is checked](#what-is-checked-and-what-is-not).)
 
-Or build it: `go install github.com/HyakoV3/librespeed-route/cmd/librespeed-route@latest` (Go 1.26).
+**1. The program.** Download the archive for your system from the [releases](https://github.com/HyakoV3/librespeed-route/releases)
+(`librespeed-route_<version>_windows_amd64.zip`, `..._darwin_arm64.tar.gz`, `..._linux_amd64.tar.gz`, and so on), unpack it and let it install
+itself for your browsers (your user only, no administrator rights):
 
-## Use
+- **Windows:** double-click `librespeed-route.exe` and press `I` (or, in a terminal, `.\librespeed-route.exe install-native-host`).
+  SmartScreen may warn the first time ("More info" → "Run anyway"): the binaries are not signed.
+- **macOS and Linux:** `./librespeed-route install-native-host`. On macOS, a file that was downloaded is quarantined; if the browser cannot
+  start it, `xattr -d com.apple.quarantine librespeed-route` (the one in the folder that the command says) lets it run. On Linux,
+  `chmod +x librespeed-route` first if the archive did not keep the mode.
+
+The command copies the program to a folder of your user and tells Chrome, Edge and Firefox (the ones that you have used) that the extension
+may start it. `./librespeed-route doctor` says what is where, and what would not work.
+
+**2. The extension.** There is no store item yet, so it is loaded from a folder:
+
+- **Firefox:** unpack `librespeed-route-extension-firefox-<version>.zip`, open `about:debugging#/runtime/this-firefox`, "Load Temporary
+  Add-on", and choose the `manifest.json` of the folder. A temporary add-on is gone when Firefox closes: load it again next time (a signed one
+  comes with the add-ons site).
+- **Chrome and Edge:** unpack `librespeed-route-extension-chromium-sideload-<version>.zip` **into a folder that you keep** (Chrome reads it
+  from there every time), open `chrome://extensions` (Edge: `edge://extensions`), turn on "Developer mode", "Load unpacked", and choose the
+  folder. Its id must be `gcgijalhbacnoacnklibiffbacdchjgm`. Use the `sideload` zip and not the plain `...chromium-<version>.zip`: that one is
+  for a store, has no key, and Chrome gives it another id, which the program refuses ("Access to the specified native messaging host is
+  forbidden").
+
+**3. Use it.** Open the route page of a server (over https), click the icon of the extension (pin it to the toolbar if you do not see it)
+and press **Trace**. It takes a few seconds, up to two minutes when routers do not answer. The route comes to the page by itself
+("Route received from the browser extension"), and the popup also shows the line, with a Copy button, in case you want to paste it.
+
+If the popup says that the program is not installed or cannot be started, it shows, in small letters, what the browser said and the id of
+the extension:
+
+| What the browser says | What it means |
+|---|---|
+| `Access to the specified native messaging host is forbidden` | the id of the extension is not the one that the program lets in (see step 2) |
+| `Specified native messaging host not found` | the program was not installed for this browser: run the install again, and `doctor` |
+| `Native host has exited` | the program closed at once: `doctor` and, on Windows, a security program may have blocked the file |
+
+**Update:** download the new release, run the install again (it replaces the copy), and load the new extension (Firefox: remove the old
+temporary add-on first). **Uninstall:** on Windows, double-click the program and press `U`; elsewhere `./librespeed-route uninstall-native-host`;
+it removes only what the install wrote. Then remove the extension from the browser.
+
+What goes where is in [docs/protocol.md](docs/protocol.md). The extension has no content script and no permission for any site: only your
+click starts a trace, and the target is always the address of the tab you are on. No page can start a trace.
+
+## The command line
+
+Unpacked from a release (or built: `go install github.com/HyakoV3/librespeed-route/cmd/librespeed-route@latest`, Go 1.26):
 
 ```
 librespeed-route [options] HOST
@@ -30,8 +74,14 @@ librespeed-route [options] HOST
   --json          write a JSON object to stdout and no table
   --quiet         no table
   --timeout T     the longest to wait, as a duration (default 2m)
+  --lang L        the language of the messages: en, pt, es or sv
   --version
 ```
+
+**Languages.** The program speaks English, Portuguese, Spanish and Swedish: the window of a double click, the installer, `doctor`, the table, the
+help and the errors (the extension has the same four). It uses the language of the system (on Windows the one of your user; elsewhere `LC_ALL`,
+`LC_MESSAGES`, `LANGUAGE` or `LANG`), English when it is none of them. To choose: `LIBRESPEED_ROUTE_LANG=pt` (for everything) or `--lang pt` (for a
+trace). The line for the page (`LSR1`), the JSON and the exit codes do not depend on the language.
 
 Options go before the host. Only a **public** address is traced (an internal one, loopback, documentation addresses and the like are
 refused with exit code 2).
@@ -56,7 +106,7 @@ show them.
 
 Exit codes (stable): `0` ok, `1` usage, `2` the host cannot be traced, `3` no tracert/traceroute/tracepath on this system, `4` failed (the
 tool, the output, or a route that does not fit in the text of the page), `130` interrupted. It never asks a question and never reads its
-input.
+input, except in the window that a double click opens on Windows (install, uninstall or quit).
 
 ## How it is built
 
@@ -69,26 +119,6 @@ input.
 - **The parser is a port of the one of the page** (`route-parse.js`), held to it by tests: the real outputs of the page repository are the
   vectors (`testdata/vectors`), and a test runs the page's own parser with Node over 2000 outputs made at random and compares the two.
   `testdata/PIN` says which version of the page file is the one.
-
-## Browser extension (in development, not published)
-
-`extension/` is a browser extension for Chrome, Edge and Firefox that traces the route **to the server of the page you are on** with one click on
-its icon, using this program, and hands the line to the page. It is built from the same repository because the two halves speak one protocol
-(`docs/protocol.md`). It has no content script and no permission for any site: only the button of the person starts a trace, and the target is
-the address of the tab.
-
-To try it on your computer (no store involved):
-
-```
-go build -o librespeed-route ./cmd/librespeed-route
-./librespeed-route install-native-host          # tells Chrome, Edge and Firefox that the extension may start it
-go run ./cmd/extbuild -dev -version 0.1.0 -out dist/extension
-```
-
-then Chrome/Edge: `chrome://extensions` → Developer mode → "Load unpacked" → `dist/extension/chromium` (its id is
-`gcgijalhbacnoacnklibiffbacdchjgm`, the one that the program lets in); Firefox: `about:debugging` → "This Firefox" → "Load Temporary Add-on" →
-`dist/extension/firefox/manifest.json`. Open the route page of a server (https), click the icon, press "Trace". The popup also shows the line
-(with a Copy button), which the page reads when pasted. `./librespeed-route doctor` says what is where, and `uninstall-native-host` takes it away.
 
 ## Development
 
@@ -107,7 +137,17 @@ against the page's parser on random outputs; the scopes of addresses against the
 page (the page reads back what was written, no internal address is ever in it, the limit of 1900 characters is exact); the command line that is
 built for each system; that a tool that never ends is killed; the exit codes.
 
+By hand: the whole chain (the program started by the browser, the `tracert` of Windows, the line handed to the page) on Windows 11 with
+Firefox and with Chrome, with the release 0.2.1. By the CI, on Linux, Windows and macOS: the tests above, the installer (the manifests, and the
+registry of the user on Windows), the host (frames, requests, replies, cancel, lock), and the extension in the Chromium of Playwright with the real
+program and a canned traceroute.
+
 **Not verified**, and to be said before anyone relies on it:
+
+- macOS and Linux with a real browser starting the program, and Edge (it reads the same key as Chromium, so it should work).
+- The language of Windows (`GetUserDefaultLocaleName`) was only compiled for Windows, not run there; the translations were written by one person and
+  should be read by someone who speaks each language.
+- Chrome and Edge need the id of the folder-loaded extension to be the one in the program: there is no store item yet.
 
 - macOS: the output of `traceroute` and `traceroute6` of a real Mac (the vectors for macOS were written by hand from the documented format).
 - Windows: the exact bytes of `tracert` when its output goes to a pipe (the code page), `tracert` in languages other than Portuguese,

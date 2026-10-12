@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/HyakoV3/librespeed-route/internal/i18n"
 	"github.com/HyakoV3/librespeed-route/internal/install"
 	"github.com/HyakoV3/librespeed-route/internal/route"
 )
@@ -47,6 +48,8 @@ type Env struct {
 	// Interactive: the program was opened with a double click (Windows, no arguments): it asks what to do instead of printing the usage
 	Interactive bool
 	Stdin       io.Reader
+	// Lang is the language of the messages (English when empty); --lang changes it for one run
+	Lang i18n.Lang
 }
 
 // SystemEnv is the real system.
@@ -54,6 +57,7 @@ func SystemEnv(version string) Env {
 	exe, _ := os.Executable()
 	home, _ := os.UserHomeDir()
 	return Env{
+		Lang:        i18n.Detect(os.Getenv, i18n.SystemLocale()),
 		Interactive: runtime.GOOS == "windows" && len(os.Args) == 1 && ownsConsole(),
 		Stdin:       os.Stdin,
 		Install: install.Env{
@@ -81,62 +85,41 @@ func SystemEnv(version string) Env {
 	}
 }
 
-const usage = `librespeed-route traces the route from this computer to a host, with the tool that the system already has
-(tracert on Windows, traceroute on macOS and Linux, tracepath when there is no traceroute).
-
-Usage: librespeed-route [options] HOST
-
-  -4, -6          trace over IPv4 or IPv6 (default: the first public address of the host)
-  --json          write a JSON object to stdout and no table
-  --quiet         no table
-  --timeout T     the longest to wait, as a duration (default 2m)
-  --version       print the version
-
-The table goes to stderr and one line of text for the page ("LSR1!...") to stdout, so "librespeed-route HOST | clip" copies only the
-line. Only public addresses are written in it: the ones of your internal network are left out. Only public addresses are traced.
-
-For the browser extension:
-  install-native-host [--all]   copy this program to a folder of your user and tell Chrome, Edge and Firefox (the ones that you have used;
-                                --all: every one) that the extension may start it. No administrator rights.
-  uninstall-native-host         take away what install-native-host wrote, and only that
-  doctor                        say what is where, and what would not work
-
-Exit codes: 0 ok, 1 usage, 2 the host cannot be traced, 3 no traceroute tool on this system, 4 failed, 130 interrupted.
-Options go before the host.
-`
-
 // subcommand runs install-native-host, uninstall-native-host and doctor (the first word of the arguments): the words are commands, not
 // host names.
 func subcommand(args []string, stdout, stderr io.Writer, env Env) (int, bool) {
+	lang := env.Lang
 	switch args[0] {
 	case "install-native-host":
 		fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
 		fs.SetOutput(io.Discard)
 		all := fs.Bool("all", false, "")
 		if fs.Parse(args[1:]) != nil || fs.NArg() != 0 {
-			fmt.Fprint(stderr, usage)
+			fmt.Fprint(stderr, lang.T("usage"))
 			return ExitUsage, true
 		}
 		e := env.Install
 		e.Out = stdout
+		e.Lang = lang
 		if err := install.Install(e, *all); err != nil {
-			fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
+			fmt.Fprint(stderr, lang.T("err.prefix", reason(lang, err)))
 			return ExitFailed, true
 		}
 		return ExitOK, true
 	case "uninstall-native-host", "doctor":
 		if len(args) != 1 {
-			fmt.Fprint(stderr, usage)
+			fmt.Fprint(stderr, lang.T("usage"))
 			return ExitUsage, true
 		}
 		e := env.Install
 		e.Out = stdout
+		e.Lang = lang
 		run := install.Uninstall
 		if args[0] == "doctor" {
 			run = install.Doctor
 		}
 		if err := run(e); err != nil {
-			fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
+			fmt.Fprint(stderr, lang.T("err.prefix", reason(lang, err)))
 			return ExitFailed, true
 		}
 		return ExitOK, true
@@ -149,6 +132,7 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 	if len(args) == 0 && env.Interactive && env.Stdin != nil {
 		e := env.Install
 		e.Out = stdout
+		e.Lang = env.Lang
 		return interactive(env.Stdin, stdout, e)
 	}
 	if len(args) >= 1 {
@@ -156,8 +140,19 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 			return code
 		}
 	}
+	// --lang is read first, so that what is said about the other options is in the language that was asked for
+	lang := env.Lang
+	if asked, ok := languageAsked(args); ok {
+		if l, valid := i18n.Parse(asked); valid {
+			lang = l
+		} else {
+			fmt.Fprint(stderr, lang.T("usage"))
+			return ExitUsage
+		}
+	}
 	fs := flag.NewFlagSet("librespeed-route", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+	fs.String("lang", "", "")
 	four := fs.Bool("4", false, "")
 	six := fs.Bool("6", false, "")
 	asJSON := fs.Bool("json", false, "")
@@ -167,11 +162,11 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 	help := fs.Bool("help", false, "")
 	helpShort := fs.Bool("h", false, "")
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(stderr, "librespeed-route: %v\n\n%s", err, usage)
+		fmt.Fprint(stderr, lang.T("err.prefix", err.Error())+"\n"+lang.T("usage"))
 		return ExitUsage
 	}
 	if *help || *helpShort {
-		fmt.Fprint(stdout, usage)
+		fmt.Fprint(stdout, lang.T("usage"))
 		return ExitOK
 	}
 	if *showVersion {
@@ -179,7 +174,7 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 		return ExitOK
 	}
 	if fs.NArg() != 1 || (*four && *six) || *timeout < time.Second || *timeout > 10*time.Minute {
-		fmt.Fprint(stderr, usage)
+		fmt.Fprint(stderr, lang.T("usage"))
 		return ExitUsage
 	}
 	family := 0
@@ -193,47 +188,47 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 
 	ip, err := route.Resolve(ctx, env.Resolver, host, family)
 	if err != nil {
-		fmt.Fprintf(stderr, "librespeed-route: %s: %v\n", host, err)
+		fmt.Fprint(stderr, lang.T("err.host", host, reason(lang, err)))
 		return ExitRefused
 	}
 	spec, err := route.CommandFor(env.GOOS, ip, env.Exists, env.SystemRoot)
 	if err != nil {
-		fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
+		fmt.Fprint(stderr, lang.T("err.prefix", reason(lang, err)))
 		return ExitNoTool
 	}
 	out, err := env.Run(ctx, spec, route.Options{Timeout: *timeout})
 	if ctx.Err() != nil {
-		fmt.Fprintln(stderr, "librespeed-route: interrupted")
+		fmt.Fprint(stderr, lang.T("err.interrupted"))
 		return ExitInterrupted
 	}
 	if err != nil {
 		if errors.Is(err, route.ErrToolFailed) {
-			fmt.Fprintf(stderr, "librespeed-route: %s failed\n", spec.Tool)
+			fmt.Fprint(stderr, lang.T("err.tool-failed", spec.Tool))
 		} else {
-			fmt.Fprintf(stderr, "librespeed-route: could not run %s: %v\n", spec.Tool, err)
+			fmt.Fprint(stderr, lang.T("err.could-not-run", spec.Tool, err))
 		}
 		return ExitFailed
 	}
 	res, perr := route.Parse(out.Text)
 	if perr == route.ErrUnknown && silentHops(out.Text) > 0 {
 		// Every hop was silent: the network drops the probes of this tool (a firewall, a runner, a captive network)
-		fmt.Fprintf(stderr, "librespeed-route: no router answered (%d silent hops): the network may be dropping the packets of %s\n", silentHops(out.Text), spec.Tool)
+		fmt.Fprint(stderr, lang.T("err.silent", silentHops(out.Text), spec.Tool))
 		return ExitFailed
 	}
 	if perr != nil {
-		fmt.Fprintf(stderr, "librespeed-route: the output of %s was not understood (%v)", spec.Tool, perr)
+		fmt.Fprint(stderr, lang.T("err.not-understood", spec.Tool, perr.Error()))
 		if out.Stopped != "" {
-			fmt.Fprintf(stderr, ", it was stopped: %s", out.Stopped)
+			fmt.Fprint(stderr, lang.T("err.stopped-suffix", out.Stopped))
 		}
 		fmt.Fprintln(stderr)
 		return ExitFailed
 	}
 	if out.Stopped != "" && !*quiet && !*asJSON {
-		fmt.Fprintf(stderr, "librespeed-route: %s was stopped (%s); this is what it had until then\n", spec.Tool, out.Stopped)
+		fmt.Fprint(stderr, lang.T("msg.stopped", spec.Tool, out.Stopped))
 	}
 	nonce, err := env.Nonce()
 	if err != nil {
-		fmt.Fprintf(stderr, "librespeed-route: %v\n", err)
+		fmt.Fprint(stderr, lang.T("err.prefix", err.Error()))
 		return ExitFailed
 	}
 	text, lerr := route.EncodeLSR1(res, ip.String(), nonce, route.VersionTag(env.Version, spec.Tool), env.Now().Unix())
@@ -255,14 +250,14 @@ func Main(ctx context.Context, args []string, stdout, stderr io.Writer, env Env)
 		fmt.Fprintln(stdout, string(encoded))
 	} else {
 		if !*quiet {
-			route.WriteTable(stderr, res, ip.String())
+			route.WriteTable(stderr, lang, res, ip.String())
 		}
 		if lerr == nil {
 			fmt.Fprintln(stdout, text)
 		}
 	}
 	if lerr != nil {
-		fmt.Fprintf(stderr, "librespeed-route: %v\n", lerr)
+		fmt.Fprint(stderr, lang.T("err.prefix", reason(lang, lerr)))
 		return ExitFailed
 	}
 	return ExitOK
@@ -277,4 +272,42 @@ func silentHops(text string) int {
 		}
 	}
 	return n
+}
+
+// languageAsked finds --lang (or -lang) in the arguments, in the forms "--lang pt" and "--lang=pt"; ok is false when it is not there
+func languageAsked(args []string) (string, bool) {
+	for i, a := range args {
+		if a == "--" {
+			return "", false
+		}
+		for _, prefix := range []string{"--lang=", "-lang="} {
+			if strings.HasPrefix(a, prefix) {
+				return strings.TrimPrefix(a, prefix), true
+			}
+		}
+		if (a == "--lang" || a == "-lang") && i+1 < len(args) {
+			return args[i+1], true
+		}
+		if a == "--lang" || a == "-lang" {
+			return "", true
+		}
+	}
+	return "", false
+}
+
+// reason is the text of an error that the program knows, in the language; the others are shown as they are
+func reason(lang i18n.Lang, err error) string {
+	for target, key := range map[error]string{
+		route.ErrBadHost:     "reason.bad-host",
+		route.ErrNoAddress:   "reason.no-address",
+		route.ErrNotGlobal:   "reason.not-global",
+		route.ErrNoTool:      "reason.no-tool",
+		route.ErrLSR1TooLong: "reason.lsr1-too-long",
+		install.ErrPath:      "reason.path",
+	} {
+		if errors.Is(err, target) {
+			return lang.T(key)
+		}
+	}
+	return err.Error()
 }

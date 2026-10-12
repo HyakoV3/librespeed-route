@@ -25,7 +25,10 @@ jobs:
         with:
           node-version: 22
       - name: The two zips of the extension (the version of the manifest is the one of the tag)
-        run: go run ./cmd/extbuild -version "${GITHUB_REF_NAME#v}" -zip -out extension-dist
+        run: |
+          go run ./cmd/extbuild -version "${GITHUB_REF_NAME#v}" -zip -out extension-dist
+          # The same extension with the key of development, to be loaded from a folder (the id that the program lets in) until there is one in a store
+          go run ./cmd/extbuild -dev -version "${GITHUB_REF_NAME#v}" -zip -out extension-sideload
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser

@@ -136,7 +136,12 @@ func build(root, out, version string, dev, doZip bool) error {
 			if err := zw.Close(); err != nil {
 				return err
 			}
-			name := filepath.Join(out, fmt.Sprintf("librespeed-route-extension-%s-%s.zip", b, version))
+			// The zip with the key of development is for loading the extension from a folder before there is one in a store: its name says so
+			kind := ""
+			if dev {
+				kind = "sideload-"
+			}
+			name := filepath.Join(out, fmt.Sprintf("librespeed-route-extension-%s-%s%s.zip", b, kind, version))
 			if err := os.WriteFile(name, buf.Bytes(), 0o644); err != nil {
 				return err
 			}

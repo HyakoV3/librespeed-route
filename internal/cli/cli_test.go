@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/HyakoV3/librespeed-route/internal/i18n"
 	"github.com/HyakoV3/librespeed-route/internal/install"
 	"github.com/HyakoV3/librespeed-route/internal/route"
 )
@@ -208,7 +209,7 @@ func TestTheExitCodesAreTheDocumentedOnes(t *testing.T) {
 			t.Errorf("%s is %d, documented as %d", name, c[0], c[1])
 		}
 	}
-	if !strings.Contains(usage, "Exit codes: 0 ok, 1 usage, 2 the host cannot be traced, 3 no traceroute tool on this system, 4 failed, 130 interrupted.") {
+	if !strings.Contains(i18n.En.T("usage"), "Exit codes: 0 ok, 1 usage, 2 the host cannot be traced, 3 no traceroute tool on this system, 4 failed, 130 interrupted.") {
 		t.Error("the help does not say the codes")
 	}
 }
@@ -279,3 +280,113 @@ func (r mapRegistry) Get(key string) (string, bool) {
 	return v, ok
 }
 func (r mapRegistry) Delete(key string) error { delete(r, key); return nil }
+
+// What the program says is in the language of the system, or of --lang: the table, the errors, the help, the doctor and the window of a double
+// click, in each of the four
+func TestTheProgramSpeaksTheFourLanguages(t *testing.T) {
+	good := route.Output{Text: vector(t, "linux-traceroute-v4-cgnat.txt")}
+	words := map[i18n.Lang]struct{ title, refused, usage, silent, internal, also, best string }{
+		i18n.En: {"Route to 8.8.8.8", "only public addresses are traced", "Usage: librespeed-route", "no router answered", "  internal", "also 100.64", "(best)"},
+		i18n.Pt: {"Rota até 8.8.8.8", "só endereços públicos são traçados", "Uso: librespeed-route", "nenhum roteador respondeu", "  interno", "também 100.64", "(melhor)"},
+		i18n.Es: {"Ruta a 8.8.8.8", "solo se trazan direcciones públicas", "Uso: librespeed-route", "ningún router respondió", "  interno", "también 100.64", "(mejor)"},
+		i18n.Sv: {"Väg till 8.8.8.8", "bara offentliga adresser spåras", "Användning: librespeed-route", "ingen router svarade", "  intern", "även 100.64", "(bäst)"},
+	}
+	for lang, w := range words {
+		// The language of the system
+		f := &fake{output: good}
+		env := f.env()
+		env.Lang = lang
+		code, _, errOut := run(t, context.Background(), env, "8.8.8.8")
+		if code != ExitOK || !strings.Contains(errOut, w.title) {
+			t.Errorf("%s table: %d %s", lang, code, errOut)
+		}
+		for _, word := range []string{w.internal, w.also, w.best, "CGNAT"} {
+			if !strings.Contains(errOut, word) {
+				t.Errorf("%s table: no %q in\n%s", lang, word, errOut)
+			}
+		}
+		if code, _, errOut = run(t, context.Background(), env, "192.168.0.1"); code != ExitRefused || !strings.Contains(errOut, w.refused) {
+			t.Errorf("%s refused: %d %s", lang, code, errOut)
+		}
+		if code, _, errOut = run(t, context.Background(), env); code != ExitUsage || !strings.Contains(errOut, w.usage) {
+			t.Errorf("%s usage: %d %s", lang, code, errOut)
+		}
+		silent := &fake{output: route.Output{Text: vector(t, "windows-en-real-allsilent-ci.txt"), Stopped: "silent"}}
+		senv := silent.env()
+		senv.Lang = lang
+		if _, _, errOut = run(t, context.Background(), senv, "8.8.8.8"); !strings.Contains(errOut, w.silent) {
+			t.Errorf("%s silent: %s", lang, errOut)
+		}
+		// --lang asks for it whatever the system says
+		other := &fake{output: good}
+		oenv := other.env()
+		oenv.Lang = i18n.En
+		if code, _, errOut = run(t, context.Background(), oenv, "--lang", string(lang), "192.168.0.1"); code != ExitRefused || !strings.Contains(errOut, w.refused) {
+			t.Errorf("--lang %s: %d %s", lang, code, errOut)
+		}
+		if _, _, errOut = run(t, context.Background(), oenv, "--lang="+string(lang), "192.168.0.1"); !strings.Contains(errOut, w.refused) {
+			t.Errorf("--lang=%s: %s", lang, errOut)
+		}
+	}
+	// A language that is not one of the four is a mistake of usage
+	f := &fake{output: good}
+	env := f.env()
+	for _, args := range [][]string{{"--lang", "fr", "8.8.8.8"}, {"--lang=", "8.8.8.8"}, {"8.8.8.8", "--lang"}, {"--lang"}} {
+		if code, _, _ := run(t, context.Background(), env, args...); code != ExitUsage {
+			t.Errorf("%v: %d", args, code)
+		}
+	}
+}
+
+func TestTheWindowOfADoubleClickInEachLanguage(t *testing.T) {
+	for lang, words := range map[i18n.Lang][3]string{
+		i18n.En: {"Choose [I/U/Q]", "Done. Now add the extension", "Press Enter to close"},
+		i18n.Pt: {"Escolha [I/U/Q]", "Pronto. Agora adicione a extensão", "Pressione Enter para fechar"},
+		i18n.Es: {"Elige [I/U/Q]", "Listo. Ahora añade la extensión", "Pulsa Intro para cerrar"},
+		i18n.Sv: {"Välj [I/U/Q]", "Klart. Lägg nu till tillägget", "Tryck på Enter för att stänga"},
+	} {
+		reg := map[string]string{}
+		f := &fake{}
+		env := f.env()
+		env.Lang = lang
+		env.Interactive = true
+		env.Stdin = strings.NewReader("i\n\n")
+		env.Install = install.Env{GOOS: "windows", Home: t.TempDir(), LocalAppData: filepath.Join(t.TempDir(), "Local"), Exe: os.Args[0], Registry: mapRegistry(reg)}
+		var out bytes.Buffer
+		if code := Main(context.Background(), nil, &out, io.Discard, env); code != ExitOK || len(reg) != 4 {
+			t.Fatalf("%s: %d %v", lang, code, reg)
+		}
+		for _, w := range words {
+			if !strings.Contains(out.String(), w) {
+				t.Errorf("%s: no %q in\n%s", lang, w, out.String())
+			}
+		}
+	}
+}
+
+func TestDoctorAndUninstallInEachLanguage(t *testing.T) {
+	for lang, words := range map[i18n.Lang][3]string{
+		i18n.En: {"program:", "removed", "(there)"},
+		i18n.Pt: {"programa:", "removido", "(está lá)"},
+		i18n.Es: {"programa:", "eliminado", "(está)"},
+		i18n.Sv: {"program:", "borttaget", "(finns)"},
+	} {
+		reg := map[string]string{}
+		f := &fake{}
+		env := f.env()
+		env.Lang = lang
+		env.Install = install.Env{GOOS: "windows", Home: t.TempDir(), LocalAppData: filepath.Join(t.TempDir(), "Local"), Exe: os.Args[0], Registry: mapRegistry(reg)}
+		var out bytes.Buffer
+		Main(context.Background(), []string{"install-native-host"}, &out, io.Discard, env)
+		out.Reset()
+		Main(context.Background(), []string{"doctor"}, &out, io.Discard, env)
+		if !strings.Contains(out.String(), words[0]) || !strings.Contains(out.String(), words[2]) {
+			t.Errorf("%s doctor: %s", lang, out.String())
+		}
+		out.Reset()
+		Main(context.Background(), []string{"uninstall-native-host"}, &out, io.Discard, env)
+		if !strings.Contains(out.String(), words[1]) {
+			t.Errorf("%s uninstall: %s", lang, out.String())
+		}
+	}
+}

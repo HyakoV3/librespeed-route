@@ -14,18 +14,7 @@ import (
 // its input, and the host (started by a browser) never gets here.
 func interactive(in io.Reader, out io.Writer, env install.Env) int {
 	reader := bufio.NewReader(in)
-	fmt.Fprint(out, `librespeed-route
-
-This program connects the browser extension "Route back for LibreSpeed pages" (Chrome, Edge, Firefox) to this computer: when you click the
-extension on the page of a server, it runs the tracert of Windows and hands the route to the page, without the addresses of your own network.
-
-  [I] Install it for this user (it is copied to %LOCALAPPDATA%\librespeed-route and registered for the browsers; no administrator rights)
-  [U] Uninstall it (takes away only what the install wrote)
-  [Q] Quit
-
-To trace a route from a terminal instead:  librespeed-route.exe HOST   (or --help)
-
-Choose [I/U/Q]: `)
+	fmt.Fprint(out, env.Lang.T("win.menu"))
 	line, _ := reader.ReadString('\n')
 	answer := strings.ToLower(strings.TrimSpace(line))
 	code := ExitOK
@@ -33,23 +22,23 @@ Choose [I/U/Q]: `)
 	case "i":
 		fmt.Fprintln(out)
 		if err := install.Install(env, false); err != nil {
-			fmt.Fprintf(out, "\nIt did not work: %v\n", err)
+			fmt.Fprint(out, env.Lang.T("win.failed", err))
 			code = ExitFailed
 		} else {
-			fmt.Fprintln(out, "\nDone. Now add the extension to the browser, and click its icon on the page of a server.")
+			fmt.Fprint(out, env.Lang.T("win.installed"))
 		}
 	case "u":
 		fmt.Fprintln(out)
 		if err := install.Uninstall(env); err != nil {
-			fmt.Fprintf(out, "\nIt did not work: %v\n", err)
+			fmt.Fprint(out, env.Lang.T("win.failed", err))
 			code = ExitFailed
 		} else {
-			fmt.Fprintln(out, "\nDone.")
+			fmt.Fprint(out, env.Lang.T("win.done"))
 		}
 	default:
-		fmt.Fprintln(out, "\nNothing was changed.")
+		fmt.Fprint(out, env.Lang.T("win.nothing"))
 	}
-	fmt.Fprint(out, "\nPress Enter to close. ")
+	fmt.Fprint(out, env.Lang.T("win.press"))
 	_, _ = reader.ReadString('\n')
 	return code
 }
