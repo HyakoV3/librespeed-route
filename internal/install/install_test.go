@@ -210,9 +210,10 @@ func TestInstallOnWindowsUsesTheRegistryOfTheUser(t *testing.T) {
 		t.Errorf("left: %v %v", reg, exists(dir))
 	}
 	// A folder that cmd.exe would read is refused
-	for _, bad := range []string{`C:\Users\a&b`, `C:\Users\100%`, `C:\Users\a"b`, `C:\Users\a^b`, `C:\Users\a!b`} {
+	// (under a folder of the test: if the check were gone the files would be written there, never in the folder of the repository)
+	for _, bad := range []string{`a&b`, `100%`, `a"b`, `a^b`, `a!b`} {
 		e, _ := setup(t, "windows")
-		e.LocalAppData = bad
+		e.LocalAppData = filepath.Join(t.TempDir(), bad)
 		if err := Install(e, false); err != ErrPath {
 			t.Errorf("%s: %v", bad, err)
 		}

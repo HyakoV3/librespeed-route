@@ -1,9 +1,0 @@
-{
-  "name": "io.github.hyakov3.librespeed_route",
-  "description": "librespeed-route: traces the route from this computer to the server of the page that you clicked on, for the route page of LibreSpeed",
-  "path": "C:\\Users\\a^b/librespeed-route/librespeed-route.exe",
-  "type": "stdio",
-  "allowed_extensions": [
-    "librespeed-route@hyakov3.github.io"
-  ]
-}
