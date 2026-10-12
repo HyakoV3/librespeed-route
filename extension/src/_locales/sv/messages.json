@@ -75,5 +75,30 @@
   },
   "errorBadRequest": {
     "message": "Tillägget och programmet förstår inte varandra: uppdatera båda."
+  },
+  "siteOffText": {
+    "message": "Låta sidan på $host$ starta en spårning själv, med en egen knapp? Det fungerar bara efter att du klickat på den sidan, och bara för den här webbplatsen.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "allowButton": {
+    "message": "Tillåt den här webbplatsen"
+  },
+  "siteOnText": {
+    "message": "Sidan på $host$ får starta en spårning med en egen knapp, efter att du klickat på den.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "revokeButton": {
+    "message": "Stäng av"
+  },
+  "siteDenied": {
+    "message": "Webbläsaren gav inte tillåtelsen."
   }
 }

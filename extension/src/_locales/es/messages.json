@@ -75,5 +75,30 @@
   },
   "errorBadRequest": {
     "message": "La extensión y el programa no se entienden: actualiza los dos."
+  },
+  "siteOffText": {
+    "message": "¿Dejar que la página de $host$ inicie un trazado por sí misma, con un botón suyo? Solo funciona después de que hagas clic en esa página, y solo para este sitio.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "allowButton": {
+    "message": "Permitir este sitio"
+  },
+  "siteOnText": {
+    "message": "La página de $host$ puede iniciar un trazado con un botón suyo, después de que hagas clic en ella.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "revokeButton": {
+    "message": "Desactivar"
+  },
+  "siteDenied": {
+    "message": "El navegador no dio el permiso."
   }
 }

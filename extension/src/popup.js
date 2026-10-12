@@ -24,6 +24,7 @@
   byId("copy").textContent = t("copyButton");
 
   var detail = byId("detail");
+  var site = { host: "" };
 
   // What the browser said when it could not start the program (shown as text, small, under the message)
   function showDetail(text) {
@@ -58,6 +59,20 @@
     return api.runtime.sendMessage(request);
   }
 
+  // The button that a page of the site may have on its own: allowed here, one site at a time, by this click and the prompt of the browser
+  function drawSite(allowed) {
+    byId("site").hidden = false;
+    byId("sitetext").textContent = t(allowed ? "siteOnText" : "siteOffText", site.host);
+    byId("allow").hidden = allowed;
+    byId("revoke").hidden = !allowed;
+    byId("allow").disabled = false;
+  }
+
+  function siteNoteSet(key) {
+    byId("sitenote").textContent = key ? t(key) : "";
+    byId("sitenote").hidden = !key;
+  }
+
   function start() {
     return api.tabs.query({ active: true, currentWindow: true }).then(function (tabs) {
       tabId = tabs && tabs[0] ? tabs[0].id : null;
@@ -73,6 +88,10 @@
         if (!tab || !tab.origin) return show("stateNotHttps");
         show("stateReady", tab.host);
         trace.hidden = false;
+        if (tab.canAllow) {
+          site.host = tab.host;
+          drawSite(tab.allowed === true);
+        }
       });
     });
   }
@@ -98,6 +117,51 @@
         trace.disabled = false;
       },
     );
+  });
+
+  byId("allow").textContent = t("allowButton");
+  byId("revoke").textContent = t("revokeButton");
+
+  // The request to the browser is the first thing done in the click, with nothing awaited before it (the browser wants it to come from the
+  // click). The background is told first, without waiting, so that it knows what the permission is for even if the prompt closes this popup.
+  byId("allow").addEventListener("click", function () {
+    if (!site.host) return;
+    var host = site.host;
+    byId("allow").disabled = true;
+    siteNoteSet("");
+    ask({ type: "allow-intent", host: host, tabId: tabId });
+    var asked;
+    try {
+      asked = api.permissions.request({ origins: ["https://" + host + "/*"] });
+    } catch (error) {
+      asked = Promise.resolve(false);
+    }
+    asked.then(
+      function (granted) {
+        if (!granted) {
+          byId("allow").disabled = false;
+          return siteNoteSet("siteDenied");
+        }
+        return ask({ type: "allow-done", host: host }).then(function (answer) {
+          drawSite(!!(answer && answer.allowed));
+          if (!(answer && answer.allowed)) siteNoteSet("errorFailed");
+        });
+      },
+      function () {
+        byId("allow").disabled = false;
+        siteNoteSet("siteDenied");
+      },
+    );
+  });
+
+  byId("revoke").addEventListener("click", function () {
+    if (!site.host) return;
+    byId("revoke").disabled = true;
+    ask({ type: "revoke", host: site.host }).then(function () {
+      byId("revoke").disabled = false;
+      siteNoteSet("");
+      drawSite(false);
+    });
   });
 
   byId("copy").addEventListener("click", function () {

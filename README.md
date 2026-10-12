@@ -60,8 +60,14 @@ the extension:
 temporary add-on first). **Uninstall:** on Windows, double-click the program and press `U`; elsewhere `./librespeed-route uninstall-native-host`;
 it removes only what the install wrote. Then remove the extension from the browser.
 
-What goes where is in [docs/protocol.md](docs/protocol.md). The extension has no content script and no permission for any site: only your
-click starts a trace, and the target is always the address of the tab you are on. No page can start a trace.
+**The button on the page.** A page of a server can have its own button "Trace the way back". To let it, open the popup on that page and press
+**Allow this site**: the browser asks you once, for that one host name. From then on the button of that page starts the trace, but only
+within a moment of a click of yours on the page, only for the server of that page, one at a time and one in 30 seconds, and a mark shows on the
+icon of the extension while it runs. **Turn it off** in the popup takes the permission away. Sites you did not allow cannot even tell that the
+extension is there.
+
+What goes where is in [docs/protocol.md](docs/protocol.md). Without that permission the extension has no content script and no access to any
+site: only your click on its icon starts a trace, and the target is always the address of the tab you are on.
 
 ## The command line
 

@@ -75,5 +75,30 @@
   },
   "errorBadRequest": {
     "message": "A extensão e o programa não se entendem: atualize os dois."
+  },
+  "siteOffText": {
+    "message": "Deixar a página de $host$ iniciar um traço sozinha, com um botão dela? Só funciona depois de você clicar nessa página, e só para este site.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "allowButton": {
+    "message": "Permitir este site"
+  },
+  "siteOnText": {
+    "message": "A página de $host$ pode iniciar um traço com um botão dela, depois de você clicar nela.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "revokeButton": {
+    "message": "Desligar"
+  },
+  "siteDenied": {
+    "message": "O navegador não deu a permissão."
   }
 }

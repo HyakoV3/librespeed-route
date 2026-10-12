@@ -75,5 +75,30 @@
   },
   "errorBadRequest": {
     "message": "The extension and the program do not understand each other: update both."
+  },
+  "siteOffText": {
+    "message": "Let the page of $host$ start a trace by itself, with its own button? It will only work after you click on that page, and only for this site.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "allowButton": {
+    "message": "Allow this site"
+  },
+  "siteOnText": {
+    "message": "The page of $host$ may start a trace with its own button, after you click on it.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "revokeButton": {
+    "message": "Turn it off"
+  },
+  "siteDenied": {
+    "message": "The browser did not give the permission."
   }
 }

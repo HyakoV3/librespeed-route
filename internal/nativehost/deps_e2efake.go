@@ -47,7 +47,7 @@ func SystemDeps(version string) Deps {
 		Exists:   func(string) bool { return true },
 		Run: func(ctx context.Context, _ route.Spec, _ route.Options) (route.Output, error) {
 			select {
-			case <-time.After(300 * time.Millisecond):
+			case <-time.After(fakeDelay()):
 				return route.Output{Text: canned}, nil
 			case <-ctx.Done():
 				return route.Output{}, ctx.Err()
@@ -68,4 +68,12 @@ func SystemDeps(version string) Deps {
 func protocolFromEnv() int {
 	n, _ := strconv.Atoi(os.Getenv("LSROUTE_E2E_PROTOCOL"))
 	return n
+}
+
+// How long the canned tool takes: 300 ms, or what the test asks for (to have time to cancel a trace that is running)
+func fakeDelay() time.Duration {
+	if n, err := strconv.Atoi(os.Getenv("LSROUTE_E2E_DELAY_MS")); err == nil && n > 0 && n <= 60000 {
+		return time.Duration(n) * time.Millisecond
+	}
+	return 300 * time.Millisecond
 }

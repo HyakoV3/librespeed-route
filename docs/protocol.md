@@ -7,13 +7,49 @@ this computer to the server of the page that the person is on, and hands the ans
 
 ```
 person clicks the icon on the tab of https://server.example  →  popup  →  background  →  connectNative  →  program (host)
+or, on a site that the person allowed: clicks the button of the page  →  bridge  →  background  →  connectNative  →  program (host)
 program traces with the tracert/traceroute/tracepath of the system  →  one reply frame  →  background  →  postMessage into the tab
 ```
 
-- **No page can start a trace.** The extension has no content script, no `externally_connectable`, and no listener for messages of pages or of
-  other extensions. The target is the origin of the tab, read by the browser (`tabs.get`) when the person presses "Trace".
+- **A page can ask for a trace only if the person allowed that site** (see "The button on the page" below). Without that, the extension has
+  no content script in the page, no `externally_connectable`, and no listener for messages of pages or of other extensions. The target is
+  the origin of the tab, read by the browser (`tabs.get`), never something that a page says.
 - The answer is handed to the **top frame** of the same tab only if the tab is still on the same origin; the page gets
   `window.postMessage({ source: "librespeed-route-extension", v: 1, lsr1 }, <its own origin>)`.
+
+## The button on the page
+
+A page of a server may have its own button "Trace the way back". For that the person allows the site once, in the popup of the extension
+("Allow this site"): the popup asks the browser for the optional permission `https://<host name>/*` (a prompt of the browser) and the
+background writes the record of that click. A site is allowed only when **both** exist, the permission of the browser and the record; a
+permission given to all sites in the settings of the browser turns nothing on. The background registers the bridge (`bridge.js`) for the allowed
+host names only, in their top frame only, and registers it again from the records every time it starts (the browser forgets registered scripts
+when the extension is updated). "Turn it off" in the popup takes both away.
+
+Messages, all by `window.postMessage(message, location.origin)`; the bridge reads only `event.source === window`, `event.origin ===
+location.origin`, exactly these keys, and `id` matching `/^[A-Za-z0-9_-]{8,32}$/`:
+
+| From | Message | Meaning |
+|---|---|---|
+| page | `{ source: "librespeed-route-page", v: 1, type: "hello", id }` | is the extension here? Answered by the bridge, without the program |
+| page | `{ …, type: "trace", id }` | trace the route to my server |
+| page | `{ …, type: "cancel", id }` | give up; the program stops the tool |
+| extension | `{ source: "librespeed-route-extension", v: 1, type: "state", id, state, code? }` | `state` is `ready` (`id` is `""` for the one that the bridge posts when it loads), `tracing`, `done` or `error`; `code` is one of `not-allowed no-gesture busy no-host update refused no-tool failed silent interrupted too-long moved` |
+| extension | `{ source: "librespeed-route-extension", v: 1, lsr1 }` | the route, as above; comes before `state: "done"` |
+
+What the extension requires before a trace that a page asked for (nothing of it is read from the message):
+
+1. the bridge has a port of its own (`lsr-page`); the sender is this extension, has a tab, and is the **top frame** (`frameId` 0);
+2. the target is the origin of that tab (https, no user name) and is the origin that the browser says the bridge is in;
+3. the host name is allowed (permission **and** record), and the tab is the one in view (`tab.active`);
+4. the bridge says that the person clicked on the page a moment ago (`navigator.userActivation.isActive`) and that the page is visible;
+5. nothing else is being traced, and the host name was not traced in the last 30 seconds (the host name, not the origin: another port of the
+   same site is the same site);
+6. while it traces, the tab shows a mark on the icon of the extension; if the page reloads, navigates, closes or sends `cancel`, the port closes and
+   the program stops the tool.
+
+A page is told only a code, never the text of the browser or the id of the extension. The program is not told who asked (the same two
+messages, `hello` and `trace`, come only from the extension).
 
 ## The host
 

@@ -12,6 +12,7 @@
     }
   },
   "permissions": ["activeTab", "scripting", "nativeMessaging", "storage"],
+  "optional_host_permissions": ["https://*/*"],
   "action": {
     "default_title": "__MSG_actionTitle__",
     "default_popup": "popup.html",

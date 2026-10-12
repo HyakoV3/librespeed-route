@@ -40,19 +40,22 @@ test.afterAll(() => {
   fs.rmSync(work, { recursive: true, force: true });
 });
 
-async function launch({ withHost, protocol }) {
-  const profile = fs.mkdtempSync(path.join(work, "profile-"));
+async function launch({ withHost, protocol, delayMs, pidFile, profile: given }) {
+  const profile = given || fs.mkdtempSync(path.join(work, "profile-"));
   if (withHost) {
     const dir = path.join(profile, "NativeMessagingHosts");
     fs.mkdirSync(dir, { recursive: true });
     // The browser does not pass its environment to the host: to have a program that speaks another protocol, a script that sets it and starts
     // the real one (Linux and macOS)
     let program = hostBinary;
-    if (protocol) {
+    if (protocol || delayMs || pidFile) {
       program = path.join(profile, "host-with-protocol.sh");
-      fs.writeFileSync(program, `#!/bin/sh\nLSROUTE_E2E_PROTOCOL=${Number(protocol)} exec "${hostBinary}" "$@"\n`, {
-        mode: 0o755,
-      });
+      // exec keeps the pid: the file says which process is the program, so that a test can see that it was stopped
+      fs.writeFileSync(
+        program,
+        `#!/bin/sh\n${pidFile ? `echo $$ > "${pidFile}"\n` : ""}LSROUTE_E2E_PROTOCOL=${Number(protocol || 0)} LSROUTE_E2E_DELAY_MS=${Number(delayMs || 0)} exec "${hostBinary}" "$@"\n`,
+        { mode: 0o755 },
+      );
     }
     fs.writeFileSync(
       path.join(dir, `${HOST_NAME}.json`),
@@ -72,11 +75,11 @@ async function launch({ withHost, protocol }) {
   });
   let [worker] = context.serviceWorkers();
   if (!worker) worker = await context.waitForEvent("serviceworker");
-  return { context, worker };
+  return { context, worker, profile };
 }
 
 // A page of the "server": https://server.example, served by the test (nothing is asked of a network). It keeps what the extension posts.
-async function openServer(context, origin = "https://server.example") {
+async function openServer(context, origin = "https://server.example", hash = "") {
   const page = await context.newPage();
   await page.route(`${origin}/**`, (route) =>
     route.fulfill({
@@ -84,12 +87,47 @@ async function openServer(context, origin = "https://server.example") {
       body: `<!doctype html><title>${origin}</title><script>${parser}</script><script>
         window.__messages = [];
         window.addEventListener("message", e => window.__messages.push({ data: e.data, origin: e.origin, sameWindow: e.source === window }));
-      </script><p>route page</p>`,
+        // The button of the page: a click posts what is in __queue, or a request for a trace
+        window.__queue = [];
+        window.__trace = (id) => ({ source: "librespeed-route-page", v: 1, type: "trace", id: id || "trace0001" });
+        document.addEventListener("click", () => {
+          const list = window.__queue.length ? window.__queue : [window.__trace()];
+          window.__queue = [];
+          list.forEach(m => window.postMessage(m, location.origin));
+        });
+        // Without a click: a page that asks on its own
+        if (location.hash === "#auto") setTimeout(() => { window.__act = [navigator.userActivation.isActive, navigator.userActivation.hasBeenActive, document.visibilityState]; window.postMessage(window.__trace("auto00001"), location.origin); }, 300);
+      </script><button id="go">Trace the way back</button><p>route page</p>`,
     }),
   );
-  await page.goto(`${origin}/`);
+  await page.goto(`${origin}/${hash}`);
   return page;
 }
+
+// What the extension said to the page, in order
+const said = (page) =>
+  page.evaluate(() => window.__messages.map((m) => m.data).filter((d) => d && d.source === "librespeed-route-extension"));
+
+// The sites that the person allowed (the record of the click), and the bridge made from them
+async function allow(worker, hosts) {
+  await worker.evaluate(async (list) => {
+    const allowed = {};
+    for (const h of list) allowed[h] = true;
+    await chrome.storage.local.set({ allowed });
+    await self.librespeedRoute.reconcile();
+  }, hosts);
+}
+
+const popupSender = (id) => ({ id, url: `chrome-extension://${id}/popup.html` });
+
+const alive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 const tabIdOf = (worker, pattern) => worker.evaluate(async (p) => (await chrome.tabs.query({ url: p }))[0].id, pattern);
 
@@ -106,6 +144,8 @@ test("hello: the host answers with its protocol, and the extension says it is re
   expect(typeof hello.tool).toBe("string");
   await context.close();
 });
+
+const trace0001 = "trace0001";
 
 test("a trace is handed to the page of the tab, for its own origin, with the internal addresses left out", async () => {
   const { context, worker } = await launch({ withHost: true });
@@ -196,7 +236,7 @@ test("without the program the extension says so, in hello and in a trace", async
   await context.close();
 });
 
-test("no page and no other extension can start a trace: the background answers only its own popup", async () => {
+test("no page that was not allowed, and no other extension, can start a trace", async () => {
   const { context, worker } = await launch({ withHost: true });
   const page = await openServer(context);
   // A message that a page sends with the API of the page is not delivered to the extension (there is no externally_connectable): the page has
@@ -205,8 +245,10 @@ test("no page and no other extension can start a trace: the background answers o
   expect(hasRuntime).toBe(false);
   const manifest = JSON.parse(fs.readFileSync(path.join(extensionDir, "manifest.json"), "utf8"));
   expect(manifest.externally_connectable).toBeUndefined();
+  // The bridge is not in the manifest: it is registered for the sites that the person allowed, and only those
   expect(manifest.content_scripts).toBeUndefined();
   expect(manifest.permissions.sort()).toEqual(["activeTab", "nativeMessaging", "scripting", "storage"]);
+  expect(manifest.optional_host_permissions).toEqual(["https://*/*"]);
   // The source has no listener for other extensions or pages
   const source = fs.readFileSync(path.join(root, "extension", "src", "background.js"), "utf8");
   expect(source).not.toMatch(/onMessageExternal|onConnectExternal|content_scripts/);
@@ -232,7 +274,7 @@ test("the four languages have the same messages, and every message that the code
   const used = new Set();
   for (const file of ["popup.js", "popup.html"]) {
     const text = fs.readFileSync(path.join(root, "extension", "src", file), "utf8");
-    for (const m of text.matchAll(/"((?:state|error|install|trace|copy|copied|popup|ext|action)[A-Z][A-Za-z]*)"/g))
+    for (const m of text.matchAll(/"((?:state|error|install|trace|copy|copied|popup|ext|action|site|allow|revoke)[A-Z][A-Za-z]*)"/g))
       used.add(m[1]);
   }
   for (const key of used) expect(english, key).toContain(key);
@@ -249,11 +291,19 @@ test("a program that speaks another protocol is told to be updated", async () =>
 test("the background answers its own popup and nobody else", async () => {
   const { context, worker } = await launch({ withHost: true });
   const result = await worker.evaluate(async () => {
-    const own = { id: chrome.runtime.id };
+    const own = { id: chrome.runtime.id, url: chrome.runtime.getURL("popup.html") };
     const answers = [];
     const handle = self.librespeedRoute.handle;
     // Another extension (another id), a page (no id), and nothing at all
-    for (const sender of [{ id: "abcdefghijklmnopabcdefghijklmnop" }, {}, null, { url: "https://server.example/" }]) {
+    // (and the content script of a page, even with the id of this extension: it has a tab, and the url of the page)
+    for (const sender of [
+      { id: "abcdefghijklmnopabcdefghijklmnop" },
+      {},
+      null,
+      { url: "https://server.example/" },
+      { id: chrome.runtime.id, url: "https://server.example/", tab: { id: 1 } },
+      { id: chrome.runtime.id },
+    ]) {
       answers.push({ returned: handle({ type: "hello" }, sender, () => answers.push("answered")) });
     }
     // Messages of its own that it does not know, or that are not well formed
@@ -273,7 +323,294 @@ test("the background answers its own popup and nobody else", async () => {
     });
     return { answers, own2 };
   });
-  expect(result.answers).toEqual(Array(10).fill({ returned: false }));
+  expect(result.answers).toEqual(Array(12).fill({ returned: false }));
   expect(result.own2.returned).toBe(true);
+  await context.close();
+});
+
+// ---- the button on the page ------------------------------------------------------------------------------------------------------------
+
+const hello = (page, id = "hello0001") =>
+  page.evaluate((i) => window.postMessage({ source: "librespeed-route-page", v: 1, type: "hello", id: i }, location.origin), id);
+
+test("a site that was allowed: hello is answered, a click starts the trace, and the route comes in the form that the page reads", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  // The extension says by itself that it is here, and answers a hello at once
+  await expect.poll(() => said(page)).toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "", state: "ready" });
+  await hello(page);
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "hello0001", state: "ready" });
+  await page.click("#go");
+  await expect.poll(async () => (await said(page)).filter((m) => m.state === "done").length).toBe(1);
+  const messages = (await said(page)).filter((m) => m.id !== "hello0001" && m.id !== "" || !m.type);
+  expect(messages.map((m) => m.state || "lsr1")).toEqual(["tracing", "lsr1", "done"]);
+  const route = messages[1];
+  expect(Object.keys(route).sort()).toEqual(["lsr1", "source", "v"]);
+  expect(route.lsr1).toMatch(/^LSR1!n=0123456789abcdef!f=4!t=8\.8\.8\.8!/);
+  for (const ip of ["192.168.0.1", "172.24.74.112", "100.65.61.62"]) expect(route.lsr1).not.toContain(ip);
+  expect(messages[2]).toEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: trace0001, state: "done" });
+  // Nothing in the answers that the page should not have: no text of the browser, no id of the extension
+  expect(JSON.stringify(messages)).not.toContain(DEV_ID);
+  await context.close();
+});
+
+test("a page that asks without a click of the person is refused, and the program is never started", async () => {
+  const pidFile = path.join(work, "pid-nogesture");
+  fs.rmSync(pidFile, { force: true });
+  const { context, worker } = await launch({ withHost: true, pidFile });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context, "https://server.example", "#auto");
+  // Nothing is evaluated in the page until its own timer has fired: page.evaluate of a test counts as a gesture of the person
+  await page.waitForTimeout(1000);
+  expect(await page.evaluate(() => window.__act)).toEqual([false, false, "visible"]);
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "auto00001", state: "error", code: "no-gesture" });
+  expect(fs.existsSync(pidFile)).toBe(false);
+  await context.close();
+});
+
+test("a site with the permission of the browser but without the click of the person in the popup has no bridge", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  // The test manifest gives the permission for server.example (as the settings of a browser can give it to all sites): no record, no bridge
+  expect(await worker.evaluate(() => self.librespeedRoute.isAllowed("server.example"))).toBe(false);
+  await worker.evaluate(() => self.librespeedRoute.reconcile());
+  const page = await openServer(context);
+  await hello(page);
+  await page.click("#go");
+  await page.waitForTimeout(800);
+  expect(await said(page)).toEqual([]);
+  await context.close();
+});
+
+test("a record without the permission is dropped, and does not bring the bridge", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await allow(worker, ["server.example", "third.example"]);
+  expect(await worker.evaluate(async () => (await chrome.storage.local.get("allowed")).allowed)).toEqual({ "server.example": true });
+  const page = await openServer(context, "https://third.example");
+  await hello(page);
+  await page.waitForTimeout(800);
+  expect(await said(page)).toEqual([]);
+  await context.close();
+});
+
+test("turning a site off: a page that is already open is told not-allowed, and a new one has no bridge", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  await expect.poll(async () => (await said(page)).length).toBeGreaterThan(0);
+  const answer = await worker.evaluate(
+    (sender) => new Promise((resolve) => self.librespeedRoute.handle({ type: "revoke", host: "server.example" }, sender, resolve)),
+    popupSender(DEV_ID),
+  );
+  expect(answer).toEqual({ allowed: false });
+  expect(await worker.evaluate(async () => (await chrome.storage.local.get("allowed")).allowed)).toEqual({});
+  // The bridge is still in the page that was open, and the background refuses
+  await page.click("#go");
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: trace0001, state: "error", code: "not-allowed" });
+  const fresh = await openServer(context, "https://server.example");
+  await hello(fresh);
+  await fresh.waitForTimeout(800);
+  expect(await said(fresh)).toEqual([]);
+  await context.close();
+});
+
+test("after the browser is closed and opened again the bridge is back: it is made again from the records", async () => {
+  const first = await launch({ withHost: true });
+  await allow(first.worker, ["server.example"]);
+  await first.context.close();
+  const second = await launch({ withHost: true, profile: first.profile });
+  const page = await openServer(second.context);
+  await expect.poll(() => said(page)).toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "", state: "ready" });
+  await second.context.close();
+});
+
+test("messages that are not exactly the ones of the protocol are ignored, even with a click", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  await expect.poll(async () => (await said(page)).length).toBe(1);
+  const ok = { source: "librespeed-route-page", v: 1, type: "trace", id: "trace0001" };
+  await page.evaluate(
+    (m) => {
+      window.__queue = [
+        { ...m, extra: 1 },
+        { ...m, source: "other" },
+        { ...m, v: 2 },
+        { ...m, id: "short" },
+        { ...m, id: "x".repeat(33) },
+        { ...m, id: 5 },
+        { ...m, type: "reboot" },
+        { source: "librespeed-route-page", v: 1, type: "trace" },
+        "trace",
+        null,
+      ];
+    },
+    ok,
+  );
+  await page.click("#go");
+  await page.waitForTimeout(800);
+  expect((await said(page)).filter((m) => m.state !== "ready")).toEqual([]);
+  // A message from another origin (a frame of another site) is not read either
+  await context.close();
+});
+
+test("a second trace for the same host name is refused, even on another port, and the popup is refused while a page traces", async () => {
+  const { context, worker } = await launch({ withHost: true, delayMs: 1500 });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  const tabId = await tabIdOf(worker, "https://server.example/*");
+  await page.click("#go");
+  await expect.poll(async () => (await said(page)).some((m) => m.state === "tracing")).toBe(true);
+  // A trace of the popup, while the page is tracing
+  expect(await worker.evaluate((id) => self.librespeedRoute.trace(id), tabId)).toEqual({ state: "error", code: "busy" });
+  await expect.poll(async () => (await said(page)).some((m) => m.state === "done")).toBe(true);
+  // Within the 30 seconds: busy
+  await page.evaluate(() => (window.__queue = [window.__trace("trace0002")]));
+  await page.click("#go");
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "trace0002", state: "error", code: "busy" });
+  // The same host name on another port is the same site for the gap
+  const other = await openServer(context, "https://server.example:8443");
+  await expect.poll(async () => (await said(other)).length).toBeGreaterThan(0);
+  await other.bringToFront();
+  await other.click("#go");
+  await expect
+    .poll(() => said(other))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: trace0001, state: "error", code: "busy" });
+  await context.close();
+});
+
+test("a page that reloads, or gives up, stops the program", async () => {
+  for (const how of ["reload", "cancel", "close"]) {
+    const pidFile = path.join(work, `pid-${how}`);
+    fs.rmSync(pidFile, { force: true });
+    const { context, worker } = await launch({ withHost: true, delayMs: 20000, pidFile });
+    await allow(worker, ["server.example"]);
+    const page = await openServer(context);
+    await page.click("#go");
+    await expect.poll(async () => (await said(page)).some((m) => m.state === "tracing")).toBe(true);
+    await expect.poll(() => fs.existsSync(pidFile)).toBe(true);
+    const pid = Number(fs.readFileSync(pidFile, "utf8"));
+    expect(alive(pid), how).toBe(true);
+    if (how === "reload") await page.reload();
+    if (how === "close") await page.close();
+    if (how === "cancel") {
+      await page.evaluate(() => window.postMessage({ source: "librespeed-route-page", v: 1, type: "cancel", id: "trace0001" }, location.origin));
+      await expect
+        .poll(() => said(page))
+        .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: trace0001, state: "error", code: "interrupted" });
+    }
+    await expect.poll(() => alive(pid), { timeout: 8000, message: how }).toBe(false);
+    // And a new trace is possible after the 30 seconds are over: the lock of the background was let go
+    expect(await worker.evaluate(() => typeof self.librespeedRoute.trace)).toBe("function");
+    await context.close();
+  }
+});
+
+test("the popup allows a site only for its own tab, and only with a permission and an intent", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await openServer(context);
+  const tabId = await tabIdOf(worker, "https://server.example/*");
+  const popup = popupSender(DEV_ID);
+  const call = (message) =>
+    worker.evaluate(
+      ([m, sender]) => new Promise((resolve) => self.librespeedRoute.handle(m, sender, resolve)),
+      [message, popup],
+    );
+  // An intent for a host that is not the host of the tab, or that is not a host name, is refused
+  expect(await call({ type: "allow-intent", host: "other.example", tabId })).toEqual({ ok: false });
+  expect(await call({ type: "allow-intent", host: "SERVER.example/../x", tabId })).toEqual({ ok: false });
+  // Without an intent: nothing is written, even though the permission is there
+  expect(await call({ type: "allow-done", host: "server.example" })).toEqual({ allowed: false });
+  expect(await worker.evaluate(async () => (await chrome.storage.local.get("allowed")).allowed || {})).toEqual({});
+  // With the intent (the permission is in the manifest of the test): the record is written, and the bridge is put in the page at once
+  expect(await call({ type: "allow-intent", host: "server.example", tabId })).toEqual({ ok: true });
+  expect(await call({ type: "allow-done", host: "server.example" })).toEqual({ allowed: true });
+  expect(await worker.evaluate(async () => (await chrome.storage.local.get("allowed")).allowed)).toEqual({ "server.example": true });
+  const page = context.pages().find((p) => p.url().startsWith("https://server.example"));
+  await hello(page, "afterok01");
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: "afterok01", state: "ready" });
+  // The intent is used once
+  expect(await call({ type: "allow-done", host: "server.example" })).toEqual({ allowed: false });
+  await context.close();
+});
+
+test("a page is told only a code when the program is missing: nothing of the browser, no id of the extension", async () => {
+  const { context, worker } = await launch({ withHost: false });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  await expect.poll(async () => (await said(page)).length).toBeGreaterThan(0);
+  await page.click("#go");
+  await expect
+    .poll(() => said(page))
+    .toContainEqual({ source: "librespeed-route-extension", v: 1, type: "state", id: trace0001, state: "error", code: "no-host" });
+  expect(JSON.stringify(await said(page))).not.toContain(DEV_ID);
+  await context.close();
+});
+
+test("a page that is not the tab in view cannot trace, even when something there clicks", async () => {
+  const pidFile = path.join(work, "pid-background");
+  fs.rmSync(pidFile, { force: true });
+  const { context, worker } = await launch({ withHost: true, pidFile });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  await expect.poll(async () => (await said(page)).length).toBeGreaterThan(0);
+  await openServer(context, "https://other.example");
+  // The test gives the click (evaluate counts as one): the page is in the background, and the background refuses it
+  await page.evaluate(() => document.getElementById("go").click());
+  await expect.poll(async () => (await said(page)).filter((m) => m.state === "error").length).toBe(1);
+  const error = (await said(page)).find((m) => m.state === "error");
+  expect(["refused", "no-gesture"]).toContain(error.code);
+  expect(fs.existsSync(pidFile)).toBe(false);
+  await context.close();
+});
+
+test("a message from a frame of the page is not read, even with a click", async () => {
+  const pidFile = path.join(work, "pid-frame");
+  fs.rmSync(pidFile, { force: true });
+  const { context, worker } = await launch({ withHost: true, pidFile });
+  await allow(worker, ["server.example"]);
+  const page = await openServer(context);
+  await expect.poll(async () => (await said(page)).length).toBe(1);
+  // evaluate counts as a click of the person; the message comes from a frame of the same origin, which has no bridge of its own
+  await page.evaluate(() => {
+    const frame = document.createElement("iframe");
+    document.body.appendChild(frame);
+    frame.contentWindow.eval("parent.postMessage(" + JSON.stringify({ source: "librespeed-route-page", v: 1, type: "trace", id: "frame0002" }) + ", '*')");
+  });
+  await page.waitForTimeout(800);
+  expect((await said(page)).filter((m) => m.state !== "ready")).toEqual([]);
+  expect(fs.existsSync(pidFile)).toBe(false);
+  await context.close();
+});
+
+test("a page with an opaque origin (a sandbox) is not traced for", async () => {
+  const pidFile = path.join(work, "pid-sandbox");
+  fs.rmSync(pidFile, { force: true });
+  const { context, worker } = await launch({ withHost: true, pidFile });
+  await allow(worker, ["server.example"]);
+  const page = await context.newPage();
+  await page.route("https://server.example/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      headers: { "content-security-policy": "sandbox allow-scripts" },
+      body: `<!doctype html><button id="go">go</button><script>
+        document.getElementById("go").addEventListener("click", () => window.postMessage({ source: "librespeed-route-page", v: 1, type: "trace", id: "sandbox001" }, "*"));
+      </script>`,
+    }),
+  );
+  await page.goto("https://server.example/");
+  await page.click("#go");
+  await page.waitForTimeout(1000);
+  expect(fs.existsSync(pidFile)).toBe(false);
   await context.close();
 });

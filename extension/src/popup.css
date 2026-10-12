@@ -86,3 +86,15 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 4px;
 }
+
+#site {
+  padding-top: 10px;
+  margin-top: 12px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+
+#sitenote {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
