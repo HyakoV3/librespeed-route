@@ -1,7 +1,7 @@
 The page's side of the vectors and of the differential test (HyakoV3/speedtest, the fork that has route-better.html):
 
 testdata/web/route-parse.js    copy of frontend/better/javascript/route-parse.js
-                               sha256 0024b4cea3a2ff6383f075df11924772fed96473d2d3044cc1fcaa6adf91dd9e
+                               sha256 fe701ee025b2c70e359fb408401c2356f0c9e160ba0af5d89f8062f83d158dc4
                                taken from the master at 651988be3882e5860d3ed1ba9b59f1e4e0915b6f (2026-10-11)
 testdata/web/route-parity.json copy of tests/e2e/fixtures/route-parity.json (the scopes that backend/route_util.php gives)
 testdata/vectors/              copies of tests/fixtures/route-back/*.txt and *.expected.json, without mtr and lsr1 (this program does not

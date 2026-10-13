@@ -159,7 +159,7 @@ var (
 	reAddrChars = regexp.MustCompile(`^[0-9a-fA-F:.]+$`)
 	reTracepath = regexp.MustCompile(`^\s*(\d{1,2})\??:\s+(\S.*)$`)
 	reCommon    = regexp.MustCompile(`^\s*(\d{1,2})\s+(\S.*)$`)
-	reFirstTok  = regexp.MustCompile(`^\s+(\S+)`)
+	reFirstTok  = regexp.MustCompile(`^\s+(\S+)(?:\s+(\S+))?`)
 	reEndPath   = regexp.MustCompile(`^\s*(Resume:|Too many hops)`)
 	rePmtu      = regexp.MustCompile(`\bpmtu\b`)
 	reLocalhost = regexp.MustCompile(`\[LOCALHOST\]`)
@@ -329,9 +329,12 @@ func parseLines(lines []string, tool string) read {
 				}
 			}
 			// The other routers of a hop that answered from more than one are written in lines of their own, with no number
-			if first := reFirstTok.FindStringSubmatch(line); seenHop && last >= 0 && first != nil && addressOf(first[1]) != "" {
+			// (the router is an address, or a name followed by its address in parentheses; a probe lost on that line is lost for the hop)
+			if first := reFirstTok.FindStringSubmatch(line); seenHop && last >= 0 && first != nil &&
+				(addressOf(first[1]) != "" || (first[2] != "" && (first[2][0] == '(' || first[2][0] == '[') && addressOf(first[2]) != "")) {
 				more := &hopRead{}
 				if readHop(line, more) {
+					t.hop(last).lost += more.lost
 					for _, ip := range more.seen {
 						t.add(last, ip, nil)
 					}
