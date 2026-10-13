@@ -150,12 +150,13 @@ program and a canned traceroute.
 
 **Not verified**, and to be said before anyone relies on it:
 
-- macOS and Linux with a real browser starting the program, and Edge (it reads the same key as Chromium, so it should work).
+- macOS and Linux with a real browser starting the program (the output of the macOS tools is checked, see below), and Edge (it reads the same key as Chromium, so it should work).
 - The language of Windows (`GetUserDefaultLocaleName`) was only compiled for Windows, not run there; the translations were written by one person and
   should be read by someone who speaks each language.
 - Chrome and Edge need the id of the folder-loaded extension to be the one in the program: there is no store item yet.
 
-- macOS: the output of `traceroute` and `traceroute6` of a real Mac (the vectors for macOS were written by hand from the documented format).
+- macOS with a real browser: the output of `traceroute` and `traceroute6` of a real Mac (macOS 26.6.2) is now among the vectors, but the
+  program started by the browser on a Mac has not been run.
 - Windows: the exact bytes of `tracert` when its output goes to a pipe (the code page), `tracert` in languages other than Portuguese,
   and a multi-hop route on the CI runners (only the loopback is traced there).
 - `traceroute` of a Linux without root on a network that filters ICMP, and a snap or container with another `PATH`.

@@ -1,0 +1,17 @@
+traceroute to 8.8.8.8 (8.8.8.8), 12 hops max, 40 byte packets
+ 1  192.168.0.1 (192.168.0.1)  6.569 ms  4.113 ms  4.876 ms
+ 2  10.33.128.1 (10.33.128.1)  13.166 ms  14.159 ms  13.864 ms
+ 3  bd060165.virtua.com.br (189.6.1.101)  14.838 ms  16.011 ms  16.777 ms
+ 4  bd0602a4.virtua.com.br (189.6.2.164)  15.247 ms  19.477 ms  18.095 ms
+ 5  189.52.233.13 (189.52.233.13)  19.853 ms
+    189.52.233.73 (189.52.233.73)  15.624 ms *
+ 6  ebt-plag-63-core02.bsasn.embratel.net.br (200.244.212.217)  16.736 ms * *
+ 7  ebt-b6101-core01.rjo.embratel.net.br (200.244.216.15)  46.174 ms  38.417 ms  39.669 ms
+ 8  ebt-b211-agg03.rjo.embratel.net.br (200.244.18.8)  38.234 ms
+    ebt-b6101-core01.rjo.embratel.net.br (200.244.216.15)  39.514 ms
+    ebt-b211-agg03.rjo.embratel.net.br (200.244.18.8)  53.281 ms
+ 9  ebt-b211-agg03.rjo.embratel.net.br (200.244.18.8)  37.540 ms
+    peer-b54-agg03.rjo.embratel.net.br (201.39.52.58)  38.330 ms  37.661 ms
+10  * * peer-b54-agg03.rjo.embratel.net.br (201.39.52.58)  38.587 ms
+11  * * *
+12  * * *

@@ -1,0 +1,113 @@
+{
+  "tool": "traceroute",
+  "family": 6,
+  "target_name": "2001:4860:4860::8888",
+  "target_ip": "2001:4860:4860::8888",
+  "hops": [
+    {
+      "ttl": 1,
+      "ip": "2804:14c:6bd2:4541::1",
+      "alt_ips": [],
+      "rtt_min": 4.28,
+      "rtt_avg": 5.54,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 2,
+      "ip": "2804:14c:6bd2:1000::1",
+      "alt_ips": [],
+      "rtt_min": 13.79,
+      "rtt_avg": 14.57,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 3,
+      "ip": "2804:14c:6500:d8::1",
+      "alt_ips": [],
+      "rtt_min": 13.89,
+      "rtt_avg": 18,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 4,
+      "ip": "2620:0:1cff:dead:beee::1f9b",
+      "alt_ips": [],
+      "rtt_min": 13.96,
+      "rtt_avg": 14.28,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 5,
+      "ip": "2804:a8:2:88::11f9",
+      "alt_ips": [],
+      "rtt_min": 13.84,
+      "rtt_avg": 13.99,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 6,
+      "ip": null,
+      "alt_ips": [],
+      "rtt_min": null,
+      "rtt_avg": null,
+      "sent": 3,
+      "answered": 0,
+      "flags": [],
+      "scope": "none"
+    },
+    {
+      "ttl": 7,
+      "ip": "2804:a8:2:b0::11ca",
+      "alt_ips": [],
+      "rtt_min": 37.11,
+      "rtt_avg": 39.04,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 8,
+      "ip": "2800:3f0:83a2:80::1",
+      "alt_ips": [
+        "2800:3f0:83a1::1",
+        "2800:3f0:83a1:140::1"
+      ],
+      "rtt_min": 31.97,
+      "rtt_avg": 32.34,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    },
+    {
+      "ttl": 9,
+      "ip": "2001:4860:4860::8888",
+      "alt_ips": [],
+      "rtt_min": 31.99,
+      "rtt_avg": 32.96,
+      "sent": 3,
+      "answered": 3,
+      "flags": [],
+      "scope": "public"
+    }
+  ],
+  "skipped": 0,
+  "reached": null,
+  "nonce": null
+}

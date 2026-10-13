@@ -317,11 +317,18 @@ var LibreSpeedRouteParse = (function () {
           if (head !== null && (target === null || (head.bracketed && !target.bracketed))) target = head;
         }
         // The other routers of a hop that answered from more than one are written in lines of their own, with no number
-        var first = /^\s+(\S+)/.exec(line);
-        if (seenHop && last !== null && first && addressOf(first[1]) !== null) {
+        // (the router is an address, or a name followed by its address in parentheses; a probe lost on that line is lost for the hop)
+        var first = /^\s+(\S+)(?:\s+(\S+))?/.exec(line);
+        if (
+          seenHop &&
+          last !== null &&
+          first &&
+          (addressOf(first[1]) !== null ||
+            (first[2] !== undefined && /^[(\[]/.test(first[2]) && addressOf(first[2]) !== null))
+        ) {
           var more = { lost: 0, flags: [], pending: [], seen: [] };
           if (readHop(line, more)) {
-            more.lost = 0;
+            table.hop(last).lost += more.lost;
             for (var m = 0; m < more.seen.length; m++) table.add(last, more.seen[m], []);
             for (var q = 0; q < more.pending.length; q++) table.add(last, more.pending[q][0], [more.pending[q][1]]);
           }
