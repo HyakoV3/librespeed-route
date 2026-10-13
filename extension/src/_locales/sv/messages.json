@@ -100,5 +100,95 @@
   },
   "siteDenied": {
     "message": "Webbläsaren gav inte tillåtelsen."
+  },
+  "detailsSummary": {
+    "message": "Detaljer"
+  },
+  "siteTitle": {
+    "message": "Den här webbplatsen"
+  },
+  "resultLabel": {
+    "message": "Ruttrad för sidan (LSR1)"
+  },
+  "sitePending": {
+    "message": "Väntar…"
+  },
+  "siteAllowed": {
+    "message": "Sidan för $host$ kan nu starta en spårning. Du kan stänga av det här.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteRevoked": {
+    "message": "Avstängt för $host$. Dess sida kan inte längre starta en spårning.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "copyDone": {
+    "message": "Raden kopierades."
+  },
+  "copyManual": {
+    "message": "Webbläsaren kopierade inte. Raden är markerad: tryck Ctrl+C (Cmd+C på Mac) för att kopiera."
+  },
+  "helpSummary": {
+    "message": "Hjälp"
+  },
+  "helpNoHostTitle": {
+    "message": "Programmet hittas inte"
+  },
+  "helpNoHost": {
+    "message": "Tillägget behöver det separata programmet librespeed-route på den här datorn. Installera det, kör librespeed-route install-native-host och öppna sedan det här fönstret igen. Under Detaljer ser du vad webbläsaren sa."
+  },
+  "helpOldTitle": {
+    "message": "Programmet är för gammalt eller för nytt"
+  },
+  "helpOld": {
+    "message": "Tillägget och programmet måste vara från samma version. Uppdatera båda och öppna sedan det här fönstret igen."
+  },
+  "helpPageTitle": {
+    "message": "Sidan kan inte spåras"
+  },
+  "helpPage": {
+    "message": "Spårningen kräver sidan för en server över https. Webbläsarens egna sidor (inställningar, ny flik) och sidor över http kan inte spåras."
+  },
+  "aboutSummary": {
+    "message": "Om"
+  },
+  "aboutVersion": {
+    "message": "Version $version$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutDescription": {
+    "message": "Spårar vägen från din dator till servern för sidan du är på, med ditt eget systems traceroute, och lämnar den till sidan."
+  },
+  "aboutHowTitle": {
+    "message": "Så fungerar det"
+  },
+  "aboutHow": {
+    "message": "Du trycker på Spåra. Tillägget ber programmet på din dator köra systemets traceroute till serverns sida. Resultatet går till sidan som en rad text."
+  },
+  "aboutPrivacyTitle": {
+    "message": "Integritet"
+  },
+  "aboutPrivacy": {
+    "message": "Adresserna i ditt eget nätverk utelämnas ur raden. Inget skickas någon annanstans än till sidan du är på, och bara listan över webbplatser du tillåtit sparas."
+  },
+  "aboutLinkRepo": {
+    "message": "Källkod och dokumentation"
+  },
+  "aboutLinkReleases": {
+    "message": "Utgåvor"
+  },
+  "aboutLinkLicense": {
+    "message": "Licens"
   }
 }

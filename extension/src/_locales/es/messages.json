@@ -100,5 +100,95 @@
   },
   "siteDenied": {
     "message": "El navegador no dio el permiso."
+  },
+  "detailsSummary": {
+    "message": "Detalles"
+  },
+  "siteTitle": {
+    "message": "Este sitio"
+  },
+  "resultLabel": {
+    "message": "Línea de la ruta para la página (LSR1)"
+  },
+  "sitePending": {
+    "message": "Esperando…"
+  },
+  "siteAllowed": {
+    "message": "La página de $host$ ahora puede iniciar una traza. Puedes apagarlo aquí.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteRevoked": {
+    "message": "Apagado para $host$. Su página ya no puede iniciar una traza.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "copyDone": {
+    "message": "La línea se copió."
+  },
+  "copyManual": {
+    "message": "El navegador no la copió. La línea está seleccionada: pulsa Ctrl+C (Cmd+C en Mac) para copiarla."
+  },
+  "helpSummary": {
+    "message": "Ayuda"
+  },
+  "helpNoHostTitle": {
+    "message": "No se encuentra el programa"
+  },
+  "helpNoHost": {
+    "message": "La extensión necesita el programa librespeed-route, que es aparte, en este equipo. Instálalo, ejecuta librespeed-route install-native-host y abre este popup otra vez. En Detalles ves lo que dijo el navegador."
+  },
+  "helpOldTitle": {
+    "message": "El programa es demasiado viejo o nuevo"
+  },
+  "helpOld": {
+    "message": "La extensión y el programa deben ser de la misma versión. Actualiza los dos y abre este popup otra vez."
+  },
+  "helpPageTitle": {
+    "message": "La página no se puede trazar"
+  },
+  "helpPage": {
+    "message": "La traza necesita la página de un servidor por https. Las páginas del propio navegador (ajustes, pestaña nueva) y las de http no se pueden trazar."
+  },
+  "aboutSummary": {
+    "message": "Acerca de"
+  },
+  "aboutVersion": {
+    "message": "Versión $version$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutDescription": {
+    "message": "Traza la ruta de tu equipo al servidor de la página en la que estás, con el traceroute de tu propio sistema, y se la entrega a la página."
+  },
+  "aboutHowTitle": {
+    "message": "Cómo funciona"
+  },
+  "aboutHow": {
+    "message": "Pulsas Trazar. La extensión pide al programa de tu equipo que ejecute el traceroute del sistema hasta el servidor de esta página. El resultado llega a la página como una línea de texto."
+  },
+  "aboutPrivacyTitle": {
+    "message": "Privacidad"
+  },
+  "aboutPrivacy": {
+    "message": "Las direcciones de tu propia red se dejan fuera de la línea. No se envía nada salvo a la página en la que estás, y solo se guarda la lista de sitios que permitiste."
+  },
+  "aboutLinkRepo": {
+    "message": "Código y documentación"
+  },
+  "aboutLinkReleases": {
+    "message": "Versiones publicadas"
+  },
+  "aboutLinkLicense": {
+    "message": "Licencia"
   }
 }

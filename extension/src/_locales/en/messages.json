@@ -100,5 +100,95 @@
   },
   "siteDenied": {
     "message": "The browser did not give the permission."
+  },
+  "detailsSummary": {
+    "message": "Details"
+  },
+  "siteTitle": {
+    "message": "This site"
+  },
+  "resultLabel": {
+    "message": "Route line for the page (LSR1)"
+  },
+  "sitePending": {
+    "message": "Waiting…"
+  },
+  "siteAllowed": {
+    "message": "The page of $host$ can now start a trace. You can turn it off here.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "siteRevoked": {
+    "message": "Turned off for $host$. Its page can no longer start a trace.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "copyDone": {
+    "message": "The line was copied."
+  },
+  "copyManual": {
+    "message": "The browser did not copy it. The line is selected: press Ctrl+C (Cmd+C on a Mac) to copy it."
+  },
+  "helpSummary": {
+    "message": "Help"
+  },
+  "helpNoHostTitle": {
+    "message": "The program is not found"
+  },
+  "helpNoHost": {
+    "message": "The extension needs the separate program librespeed-route on this computer. Install it, run librespeed-route install-native-host, then open this popup again. Under Details you can see what the browser said."
+  },
+  "helpOldTitle": {
+    "message": "The program is too old or too new"
+  },
+  "helpOld": {
+    "message": "The extension and the program must come from the same release. Update both, then open this popup again."
+  },
+  "helpPageTitle": {
+    "message": "The page cannot be traced"
+  },
+  "helpPage": {
+    "message": "A trace needs the page of a server over https. Pages of the browser itself (settings, new tab) and pages over http cannot be traced."
+  },
+  "aboutSummary": {
+    "message": "About"
+  },
+  "aboutVersion": {
+    "message": "Version $version$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutDescription": {
+    "message": "Traces the route from your computer to the server of the page you are on, with the traceroute of your own system, and hands it to the page."
+  },
+  "aboutHowTitle": {
+    "message": "How it works"
+  },
+  "aboutHow": {
+    "message": "You press Trace. The extension asks the program on your computer to run the traceroute of your system to the server of this page. The result goes to the page as one line of text."
+  },
+  "aboutPrivacyTitle": {
+    "message": "Privacy"
+  },
+  "aboutPrivacy": {
+    "message": "The addresses of your own network are left out of the line. Nothing is sent anywhere except to the page you are on, and only the list of sites you allowed is kept."
+  },
+  "aboutLinkRepo": {
+    "message": "Source code and documentation"
+  },
+  "aboutLinkReleases": {
+    "message": "Releases"
+  },
+  "aboutLinkLicense": {
+    "message": "Licence"
   }
 }

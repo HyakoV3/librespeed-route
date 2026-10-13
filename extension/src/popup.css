@@ -98,3 +98,55 @@ textarea {
   margin: 8px 0 0;
   color: var(--muted);
 }
+
+h2 {
+  margin: 10px 0 4px;
+  font-size: 13px;
+}
+
+#site h2 {
+  margin-top: 0;
+}
+
+details {
+  padding-top: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+
+#detailbox {
+  padding-top: 0;
+  margin: 0 0 10px;
+  border-top: 0;
+}
+
+summary {
+  min-height: 24px;
+  cursor: pointer;
+}
+
+summary:focus-visible,
+a:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--button);
+}
+
+ul {
+  padding-left: 18px;
+  margin: 0 0 4px;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+#copynote {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
