@@ -7,42 +7,69 @@
     <title></title>
   </head>
   <body>
-    <h1 id="title"></h1>
-    <p id="message" role="status" aria-live="polite"></p>
-    <p id="hint" hidden><code id="command"></code></p>
-    <details id="detailbox" hidden>
-      <summary id="detailsummary"></summary>
-      <p id="detail"></p>
-    </details>
-    <button id="trace" type="button" hidden></button>
-    <div id="site" hidden>
-      <h2 id="sitetitle"></h2>
-      <p id="sitetext"></p>
-      <button id="allow" type="button" hidden></button>
-      <button id="revoke" type="button" hidden></button>
-      <p id="sitenote" role="status" hidden></p>
-    </div>
-    <div id="result" hidden>
-      <textarea id="line" readonly rows="4"></textarea>
-      <button id="copy" type="button"></button>
-      <p id="copynote" role="status" hidden></p>
-    </div>
-    <details id="help">
-      <summary id="helpsummary"></summary>
-      <h2 id="helpnohosttitle"></h2>
+    <header>
+      <img src="icons/32.png" alt="" width="28" height="28" />
+      <h1 id="title"></h1>
+      <span id="version"></span>
+    </header>
+    <main>
+      <p id="message" role="status" aria-live="polite"></p>
+      <p id="hint" hidden><code id="command"></code></p>
+      <details id="detailbox" hidden>
+        <summary id="detailsummary"></summary>
+        <p id="detail"></p>
+      </details>
+      <button id="trace" class="card" type="button" hidden>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="M5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm14-10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM7 17h6a3 3 0 0 0 0-6h-2a3 3 0 0 1 0-6h6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span id="tracelabel"></span>
+      </button>
+      <div id="result" hidden>
+        <textarea id="line" readonly rows="4"></textarea>
+        <button id="copy" type="button"></button>
+        <p id="copynote" role="status" hidden></p>
+      </div>
+      <section id="site" hidden>
+        <h2 id="sitetitle"></h2>
+        <div class="row">
+          <span id="sitelabel"></span>
+          <button
+            id="sitetoggle"
+            class="switch"
+            type="button"
+            role="switch"
+            aria-checked="false"
+            aria-labelledby="sitelabel"
+          ></button>
+        </div>
+        <p id="sitetext"></p>
+        <p id="sitenote" role="status" hidden></p>
+      </section>
+    </main>
+    <section id="helppanel" class="panel" hidden>
+      <h2 id="helpsummary"></h2>
+      <h3 id="helpnohosttitle"></h3>
       <p id="helpnohost"></p>
-      <h2 id="helpoldtitle"></h2>
+      <h3 id="helpoldtitle"></h3>
       <p id="helpold"></p>
-      <h2 id="helppagetitle"></h2>
+      <h3 id="helppagetitle"></h3>
       <p id="helppage"></p>
-    </details>
-    <details id="about">
-      <summary id="aboutsummary"></summary>
+    </section>
+    <section id="aboutpanel" class="panel" hidden>
+      <h2 id="aboutsummary"></h2>
       <p id="aboutversion"></p>
       <p id="aboutdescription"></p>
-      <h2 id="abouthowtitle"></h2>
+      <h3 id="abouthowtitle"></h3>
       <p id="abouthow"></p>
-      <h2 id="aboutprivacytitle"></h2>
+      <h3 id="aboutprivacytitle"></h3>
       <p id="aboutprivacy"></p>
       <ul id="aboutlinks">
         <li>
@@ -70,7 +97,61 @@
           ></a>
         </li>
       </ul>
-    </details>
+    </section>
+    <footer>
+      <button
+        id="helpbutton"
+        class="link"
+        type="button"
+        aria-expanded="false"
+        aria-controls="helppanel"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <path
+            d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17h.01"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span id="helplabel"></span>
+      </button>
+      <button
+        id="aboutbutton"
+        class="link"
+        type="button"
+        aria-expanded="false"
+        aria-controls="aboutpanel"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <path
+            d="M12 11v6M12 7.5h.01"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span id="aboutlabel"></span>
+      </button>
+    </footer>
     <script src="popup.js"></script>
   </body>
 </html>

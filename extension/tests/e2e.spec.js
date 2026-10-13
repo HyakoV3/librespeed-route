@@ -353,7 +353,7 @@ test("the popup of the extension says that the tab is not a page to trace, and h
   const { context, worker } = await launch({ withHost: true });
   const popup = await context.newPage();
   await popup.goto(`chrome-extension://${DEV_ID}/popup.html`);
-  await expect(popup.locator("#title")).toHaveText("Route to this server");
+  await expect(popup.locator("#title")).toHaveText("Route back");
   // The tab that is active is the popup itself: not an https page
   await expect(popup.locator("#message")).toContainText(
     "Open the page of a server over https",
@@ -1013,8 +1013,8 @@ test("in Firefox the popup closes by itself after asking for the permission, so 
       [agent, tabId],
     );
     await popup.goto(`chrome-extension://${DEV_ID}/popup.html`);
-    await expect(popup.locator("#allow")).toBeVisible();
-    await popup.click("#allow");
+    await expect(popup.locator("#sitetoggle")).toBeVisible();
+    await popup.click("#sitetoggle");
     await popup.waitForTimeout(500);
     // The request is the first thing, and the popup closes only after it (never before: the browser wants it in the click)
     expect(await popup.evaluate(() => window.__order), agent).toEqual(
@@ -1044,10 +1044,14 @@ test("the About of the popup shows the version of the manifest and the official 
   const { context } = await launch({ withHost: true });
   const popup = await context.newPage();
   await popup.goto(`chrome-extension://${DEV_ID}/popup.html`);
-  await expect(popup.locator("#about")).not.toHaveAttribute("open", "");
-  await expect(popup.locator("#aboutversion")).toBeHidden();
-  await popup.locator("#about > summary").focus();
+  await expect(popup.locator("#aboutpanel")).toBeHidden();
+  await expect(popup.locator("#version")).toHaveText("v0.1.0");
+  await popup.locator("#aboutbutton").focus();
   await popup.keyboard.press("Enter");
+  await expect(popup.locator("#aboutbutton")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
   await expect(popup.locator("#aboutversion")).toHaveText("Version 0.1.0");
   const hrefs = await popup
     .locator("#aboutlinks a")
@@ -1058,9 +1062,15 @@ test("the About of the popup shows the version of the manifest and the official 
     "https://github.com/HyakoV3/librespeed-route#licence",
   ]);
   // The help is closed too, and opens the same way
-  await popup.locator("#help > summary").focus();
+  await popup.locator("#helpbutton").focus();
   await popup.keyboard.press("Space");
   await expect(popup.locator("#helppage")).toBeVisible();
+  // One panel at a time
+  await expect(popup.locator("#aboutpanel")).toBeHidden();
+  await expect(popup.locator("#aboutbutton")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
   await context.close();
 });
 
@@ -1123,10 +1133,17 @@ test("when the background does not answer well the popup says that it failed, an
     `const real = chrome.runtime.sendMessage.bind(chrome.runtime);
      chrome.runtime.sendMessage = (m) => (m && m.type === "revoke" ? Promise.reject(new Error("no")) : real(m));`,
   );
-  await expect(popup.locator("#revoke")).toBeVisible();
-  await popup.click("#revoke");
+  await expect(popup.locator("#sitetoggle")).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await popup.click("#sitetoggle");
   await expect(popup.locator("#sitenote")).toHaveText("The trace failed.");
-  await expect(popup.locator("#revoke")).toBeEnabled();
+  await expect(popup.locator("#sitetoggle")).toBeEnabled();
+  await expect(popup.locator("#sitetoggle")).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
   expect(
     await worker.evaluate(() =>
       self.librespeedRoute.isAllowed("server.example"),
@@ -1142,11 +1159,13 @@ test("turning a site off says which site was turned off", async () => {
   await allow(worker, ["server.example"]);
   const popup = await openPopup(context, tabId);
   await expect(popup.locator("#sitetext")).toContainText("server.example");
-  await popup.click("#revoke");
+  await popup.click("#sitetoggle");
   await expect(popup.locator("#sitenote")).toContainText(
     "Turned off for server.example",
   );
-  await expect(popup.locator("#allow")).toBeVisible();
-  await expect(popup.locator("#revoke")).toBeHidden();
+  await expect(popup.locator("#sitetoggle")).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
   await context.close();
 });
