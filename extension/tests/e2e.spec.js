@@ -380,7 +380,7 @@ test("the four languages have the same messages, and every message that the code
       "utf8",
     );
     for (const m of text.matchAll(
-      /"((?:state|error|install|trace|copy|copied|popup|ext|action|site|allow|revoke)[A-Z][A-Za-z]*)"/g,
+      /"((?:state|error|install|trace|copy|copied|popup|ext|action|site|allow|revoke|detail|result|help|about)[A-Z][A-Za-z]*)"/g,
     ))
       used.add(m[1]);
   }
@@ -1022,5 +1022,131 @@ test("in Firefox the popup closes by itself after asking for the permission, so 
     );
     await popup.close();
   }
+  await context.close();
+});
+
+// The popup as it is when it was opened from the tab of the server: the test says which tab (the popup of the test is a tab itself)
+async function openPopup(context, tabId, before) {
+  const popup = await context.newPage();
+  await popup.addInitScript(
+    ([id, extra]) => {
+      chrome.tabs.query = () => Promise.resolve([{ id, active: true }]);
+      // eslint-disable-next-line no-new-func
+      if (extra) new Function(extra)();
+    },
+    [tabId, before || ""],
+  );
+  await popup.goto(`chrome-extension://${DEV_ID}/popup.html`);
+  return popup;
+}
+
+test("the About of the popup shows the version of the manifest and the official links, and opens with the keyboard", async () => {
+  const { context } = await launch({ withHost: true });
+  const popup = await context.newPage();
+  await popup.goto(`chrome-extension://${DEV_ID}/popup.html`);
+  await expect(popup.locator("#about")).not.toHaveAttribute("open", "");
+  await expect(popup.locator("#aboutversion")).toBeHidden();
+  await popup.locator("#about > summary").focus();
+  await popup.keyboard.press("Enter");
+  await expect(popup.locator("#aboutversion")).toHaveText("Version 0.1.0");
+  const hrefs = await popup
+    .locator("#aboutlinks a")
+    .evaluateAll((list) => list.map((a) => a.href));
+  expect(hrefs).toEqual([
+    "https://github.com/HyakoV3/librespeed-route",
+    "https://github.com/HyakoV3/librespeed-route/releases",
+    "https://github.com/HyakoV3/librespeed-route#licence",
+  ]);
+  // The help is closed too, and opens the same way
+  await popup.locator("#help > summary").focus();
+  await popup.keyboard.press("Space");
+  await expect(popup.locator("#helppage")).toBeVisible();
+  await context.close();
+});
+
+test("Copy says Copied only when the clipboard took the line, and otherwise selects it and says to copy", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await openServer(context);
+  const tabId = await tabIdOf(worker, "https://server.example/*");
+  const popup = await openPopup(
+    context,
+    tabId,
+    `window.__fail = true;
+     Object.defineProperty(navigator, "clipboard", { value: { writeText: () => (window.__fail ? Promise.reject(new Error("no")) : Promise.resolve()) } });`,
+  );
+  await popup.click("#trace");
+  await expect(popup.locator("#result")).toBeVisible({ timeout: 30000 });
+  await popup.click("#copy");
+  await expect(popup.locator("#copynote")).toContainText("did not copy it");
+  await expect(popup.locator("#copy")).toHaveText("Copy");
+  expect(
+    await popup.evaluate(() => {
+      const t = document.getElementById("line");
+      return (
+        t.value.length > 0 &&
+        t.selectionStart === 0 &&
+        t.selectionEnd === t.value.length
+      );
+    }),
+  ).toBe(true);
+  await popup.evaluate(() => (window.__fail = false));
+  await popup.click("#copy");
+  await expect(popup.locator("#copy")).toHaveText("Copied");
+  await expect(popup.locator("#copynote")).toHaveText("The line was copied.");
+  await context.close();
+});
+
+test("when the background does not answer well the popup says that it failed, and turning a site off that fails says so and can be tried again", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await openServer(context);
+  const tabId = await tabIdOf(worker, "https://server.example/*");
+  // The background answers with an error to everything
+  const broken = await openPopup(
+    context,
+    tabId,
+    `chrome.runtime.sendMessage = () => Promise.reject(new Error("gone"));`,
+  );
+  await expect(broken.locator("#message")).toHaveText("The trace failed.");
+  await expect(broken.locator("#trace")).toBeHidden();
+  // An answer that is not one
+  const odd = await openPopup(
+    context,
+    tabId,
+    `chrome.runtime.sendMessage = () => Promise.resolve(undefined);`,
+  );
+  await expect(odd.locator("#message")).toHaveText("The trace failed.");
+  // A site that is allowed, and a revoke that fails
+  await allow(worker, ["server.example"]);
+  const popup = await openPopup(
+    context,
+    tabId,
+    `const real = chrome.runtime.sendMessage.bind(chrome.runtime);
+     chrome.runtime.sendMessage = (m) => (m && m.type === "revoke" ? Promise.reject(new Error("no")) : real(m));`,
+  );
+  await expect(popup.locator("#revoke")).toBeVisible();
+  await popup.click("#revoke");
+  await expect(popup.locator("#sitenote")).toHaveText("The trace failed.");
+  await expect(popup.locator("#revoke")).toBeEnabled();
+  expect(
+    await worker.evaluate(() =>
+      self.librespeedRoute.isAllowed("server.example"),
+    ),
+  ).toBe(true);
+  await context.close();
+});
+
+test("turning a site off says which site was turned off", async () => {
+  const { context, worker } = await launch({ withHost: true });
+  await openServer(context);
+  const tabId = await tabIdOf(worker, "https://server.example/*");
+  await allow(worker, ["server.example"]);
+  const popup = await openPopup(context, tabId);
+  await expect(popup.locator("#sitetext")).toContainText("server.example");
+  await popup.click("#revoke");
+  await expect(popup.locator("#sitenote")).toContainText(
+    "Turned off for server.example",
+  );
+  await expect(popup.locator("#allow")).toBeVisible();
+  await expect(popup.locator("#revoke")).toBeHidden();
   await context.close();
 });

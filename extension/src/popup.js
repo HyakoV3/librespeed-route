@@ -23,18 +23,77 @@
   var result = byId("result");
   var tabId = null;
 
+  // How long the background may take to answer before the popup stops waiting: a trace takes up to two minutes (and the program kills the tool
+  // by itself after that), everything else is an answer at once
+  var ANSWER_MS = 10000;
+  var TRACE_MS = 150000;
+
+  document.documentElement.lang = api.i18n.getUILanguage
+    ? api.i18n.getUILanguage()
+    : "en";
   document.title = t("popupTitle");
   byId("title").textContent = t("popupTitle");
   trace.textContent = t("traceButton");
   byId("copy").textContent = t("copyButton");
+  byId("line").setAttribute("aria-label", t("resultLabel"));
+
+  // The help and the about: text of the extension only, set as text. The version is the one of the manifest, not a copy of it.
+  [
+    ["detailsummary", "detailsSummary"],
+    ["sitetitle", "siteTitle"],
+    ["helpsummary", "helpSummary"],
+    ["helpnohosttitle", "helpNoHostTitle"],
+    ["helpnohost", "helpNoHost"],
+    ["helpoldtitle", "helpOldTitle"],
+    ["helpold", "helpOld"],
+    ["helppagetitle", "helpPageTitle"],
+    ["helppage", "helpPage"],
+    ["aboutsummary", "aboutSummary"],
+    ["aboutdescription", "aboutDescription"],
+    ["abouthowtitle", "aboutHowTitle"],
+    ["abouthow", "aboutHow"],
+    ["aboutprivacytitle", "aboutPrivacyTitle"],
+    ["aboutprivacy", "aboutPrivacy"],
+    ["linkrepo", "aboutLinkRepo"],
+    ["linkreleases", "aboutLinkReleases"],
+    ["linklicense", "aboutLinkLicense"],
+  ].forEach(function (pair) {
+    byId(pair[0]).textContent = t(pair[1]);
+  });
+  var version = "";
+  try {
+    version = api.runtime.getManifest().version || "";
+  } catch (error) {
+    // The version is only for the person who asks for help
+  }
+  byId("aboutversion").textContent = t("aboutVersion", version);
 
   var detail = byId("detail");
   var site = { host: "" };
 
-  // What the browser said when it could not start the program (shown as text, small, under the message)
+  // What the browser said when it could not start the program (shown as text, small, in a closed box under the message)
   function showDetail(text) {
     detail.textContent = text || "";
-    detail.hidden = !text;
+    byId("detailbox").hidden = !text;
+  }
+
+  // The answer of the background, or an error if it does not come: a popup that waits for ever is worse than one that says it failed
+  function within(promise, ms) {
+    return new Promise(function (resolve, reject) {
+      var timer = window.setTimeout(function () {
+        reject(new Error("timeout"));
+      }, ms);
+      promise.then(
+        function (value) {
+          window.clearTimeout(timer);
+          resolve(value);
+        },
+        function (error) {
+          window.clearTimeout(timer);
+          reject(error);
+        },
+      );
+    });
   }
 
   function show(key, substitution, install) {
@@ -62,8 +121,11 @@
     update: "stateOldHost",
   };
 
-  function ask(request) {
-    return api.runtime.sendMessage(request);
+  function ask(request, ms) {
+    return within(
+      Promise.resolve(api.runtime.sendMessage(request)),
+      ms || ANSWER_MS,
+    );
   }
 
   // The button that a page of the site may have on its own: allowed here, one site at a time, by this click and the prompt of the browser
@@ -78,8 +140,8 @@
     byId("allow").disabled = false;
   }
 
-  function siteNoteSet(key) {
-    byId("sitenote").textContent = key ? t(key) : "";
+  function siteNoteSet(key, substitution) {
+    byId("sitenote").textContent = key ? t(key, substitution) : "";
     byId("sitenote").hidden = !key;
   }
 
@@ -95,6 +157,9 @@
         ]).then(function (both) {
           var tab = both[0];
           var host = both[1];
+          // Something that is not an answer of the background (it should not happen): said as a failure, not left blank
+          if (!host || typeof host.state !== "string")
+            return show("errorFailed");
           if (host.state === "no-host") {
             show("stateNoHost", undefined, true);
             return showDetail(host.detail);
@@ -114,7 +179,7 @@
   trace.addEventListener("click", function () {
     trace.disabled = true;
     show("stateTracing");
-    ask({ type: "trace", tabId: tabId }).then(
+    ask({ type: "trace", tabId: tabId }, TRACE_MS).then(
       function (answer) {
         if (answer && answer.state === "done") {
           show(answer.delivered === false ? "stateNotDelivered" : "stateDone");
@@ -147,7 +212,7 @@
     if (!site.host) return;
     var host = site.host;
     byId("allow").disabled = true;
-    siteNoteSet("");
+    siteNoteSet("sitePending");
     ask({ type: "allow-intent", host: host, tabId: tabId });
     var asked;
     try {
@@ -159,46 +224,80 @@
     // does by itself. The background already has what it needs (the intent, and the permission when it is given) to finish the job.
     if (/Firefox\//.test(navigator.userAgent))
       window.setTimeout(window.close.bind(window), 150);
-    asked.then(
-      function (granted) {
-        if (!granted) {
+    asked
+      .then(
+        function (granted) {
+          if (!granted) {
+            byId("allow").disabled = false;
+            return siteNoteSet("siteDenied");
+          }
+          return ask({ type: "allow-done", host: host }).then(
+            function (answer) {
+              drawSite(!!(answer && answer.allowed));
+              if (answer && answer.allowed) siteNoteSet("siteAllowed", host);
+              else siteNoteSet("errorFailed");
+            },
+          );
+        },
+        function () {
           byId("allow").disabled = false;
-          return siteNoteSet("siteDenied");
-        }
-        return ask({ type: "allow-done", host: host }).then(function (answer) {
-          drawSite(!!(answer && answer.allowed));
-          if (!(answer && answer.allowed)) siteNoteSet("errorFailed");
-        });
-      },
-      function () {
+          siteNoteSet("siteDenied");
+        },
+      )
+      .catch(function () {
         byId("allow").disabled = false;
-        siteNoteSet("siteDenied");
-      },
-    );
+        siteNoteSet("errorFailed");
+      });
   });
 
   byId("revoke").addEventListener("click", function () {
     if (!site.host) return;
+    var host = site.host;
     byId("revoke").disabled = true;
-    ask({ type: "revoke", host: site.host }).then(function () {
-      byId("revoke").disabled = false;
-      siteNoteSet("");
-      drawSite(false);
-    });
+    siteNoteSet("sitePending");
+    ask({ type: "revoke", host: host }).then(
+      function (answer) {
+        byId("revoke").disabled = false;
+        if (answer && answer.allowed === false) {
+          drawSite(false);
+          siteNoteSet("siteRevoked", host);
+        } else siteNoteSet("errorFailed");
+      },
+      function () {
+        byId("revoke").disabled = false;
+        siteNoteSet("errorFailed");
+      },
+    );
   });
+
+  // "Copied" is said only when the browser wrote to the clipboard. When it cannot, the line is selected and the person is told to copy it.
+  function copyNote(key) {
+    byId("copynote").textContent = key ? t(key) : "";
+    byId("copynote").hidden = !key;
+  }
 
   byId("copy").addEventListener("click", function () {
     var line = byId("line");
+    var manual = function () {
+      line.focus();
+      line.select();
+      byId("copy").textContent = t("copyButton");
+      copyNote("copyManual");
+    };
     var done = function () {
       byId("copy").textContent = t("copiedButton");
+      copyNote("copyDone");
     };
-    if (navigator.clipboard && navigator.clipboard.writeText)
-      navigator.clipboard.writeText(line.value).then(done, function () {});
-    else {
-      line.select();
-      done();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText)
+        navigator.clipboard.writeText(line.value).then(done, manual);
+      else manual();
+    } catch (error) {
+      manual();
     }
   });
 
-  start();
+  start().catch(function () {
+    show("errorFailed");
+  });
 })();

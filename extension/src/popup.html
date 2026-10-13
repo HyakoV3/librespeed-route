@@ -10,18 +10,67 @@
     <h1 id="title"></h1>
     <p id="message" role="status" aria-live="polite"></p>
     <p id="hint" hidden><code id="command"></code></p>
-    <p id="detail" hidden></p>
+    <details id="detailbox" hidden>
+      <summary id="detailsummary"></summary>
+      <p id="detail"></p>
+    </details>
     <button id="trace" type="button" hidden></button>
     <div id="site" hidden>
+      <h2 id="sitetitle"></h2>
       <p id="sitetext"></p>
       <button id="allow" type="button" hidden></button>
       <button id="revoke" type="button" hidden></button>
       <p id="sitenote" role="status" hidden></p>
     </div>
     <div id="result" hidden>
-      <textarea id="line" readonly rows="4" aria-label="LSR1"></textarea>
+      <textarea id="line" readonly rows="4"></textarea>
       <button id="copy" type="button"></button>
+      <p id="copynote" role="status" hidden></p>
     </div>
+    <details id="help">
+      <summary id="helpsummary"></summary>
+      <h2 id="helpnohosttitle"></h2>
+      <p id="helpnohost"></p>
+      <h2 id="helpoldtitle"></h2>
+      <p id="helpold"></p>
+      <h2 id="helppagetitle"></h2>
+      <p id="helppage"></p>
+    </details>
+    <details id="about">
+      <summary id="aboutsummary"></summary>
+      <p id="aboutversion"></p>
+      <p id="aboutdescription"></p>
+      <h2 id="abouthowtitle"></h2>
+      <p id="abouthow"></p>
+      <h2 id="aboutprivacytitle"></h2>
+      <p id="aboutprivacy"></p>
+      <ul id="aboutlinks">
+        <li>
+          <a
+            id="linkrepo"
+            href="https://github.com/HyakoV3/librespeed-route"
+            target="_blank"
+            rel="noopener noreferrer"
+          ></a>
+        </li>
+        <li>
+          <a
+            id="linkreleases"
+            href="https://github.com/HyakoV3/librespeed-route/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+          ></a>
+        </li>
+        <li>
+          <a
+            id="linklicense"
+            href="https://github.com/HyakoV3/librespeed-route#licence"
+            target="_blank"
+            rel="noopener noreferrer"
+          ></a>
+        </li>
+      </ul>
+    </details>
     <script src="popup.js"></script>
   </body>
 </html>
