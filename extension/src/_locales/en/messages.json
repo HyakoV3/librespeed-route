@@ -84,9 +84,6 @@
       }
     }
   },
-  "allowButton": {
-    "message": "Allow this site"
-  },
   "siteOnText": {
     "message": "The page of $host$ may start a trace with its own button, after you click on it.",
     "placeholders": {
@@ -94,9 +91,6 @@
         "content": "$1"
       }
     }
-  },
-  "revokeButton": {
-    "message": "Turn it off"
   },
   "siteDenied": {
     "message": "The browser did not give the permission."
@@ -190,5 +184,11 @@
   },
   "aboutLinkLicense": {
     "message": "Licence"
+  },
+  "brandName": {
+    "message": "Route back"
+  },
+  "siteSwitch": {
+    "message": "Button on the page"
   }
 }

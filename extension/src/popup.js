@@ -32,8 +32,8 @@
     ? api.i18n.getUILanguage()
     : "en";
   document.title = t("popupTitle");
-  byId("title").textContent = t("popupTitle");
-  trace.textContent = t("traceButton");
+  byId("title").textContent = t("brandName");
+  byId("tracelabel").textContent = t("traceButton");
   byId("copy").textContent = t("copyButton");
   byId("line").setAttribute("aria-label", t("resultLabel"));
 
@@ -41,6 +41,9 @@
   [
     ["detailsummary", "detailsSummary"],
     ["sitetitle", "siteTitle"],
+    ["sitelabel", "siteSwitch"],
+    ["helplabel", "helpSummary"],
+    ["aboutlabel", "aboutSummary"],
     ["helpsummary", "helpSummary"],
     ["helpnohosttitle", "helpNoHostTitle"],
     ["helpnohost", "helpNoHost"],
@@ -67,6 +70,22 @@
     // The version is only for the person who asks for help
   }
   byId("aboutversion").textContent = t("aboutVersion", version);
+  byId("version").textContent = version ? "v" + version : "";
+  byId("version").hidden = !version;
+
+  // Help and About: two panels under the main part, one open at a time, opened and closed by the buttons of the footer
+  [
+    ["helpbutton", "helppanel", "aboutbutton", "aboutpanel"],
+    ["aboutbutton", "aboutpanel", "helpbutton", "helppanel"],
+  ].forEach(function (ids) {
+    byId(ids[0]).addEventListener("click", function () {
+      var open = byId(ids[1]).hidden;
+      byId(ids[1]).hidden = !open;
+      byId(ids[0]).setAttribute("aria-expanded", String(open));
+      byId(ids[3]).hidden = true;
+      byId(ids[2]).setAttribute("aria-expanded", "false");
+    });
+  });
 
   var detail = byId("detail");
   var site = { host: "" };
@@ -135,9 +154,8 @@
       allowed ? "siteOnText" : "siteOffText",
       site.host,
     );
-    byId("allow").hidden = allowed;
-    byId("revoke").hidden = !allowed;
-    byId("allow").disabled = false;
+    byId("sitetoggle").setAttribute("aria-checked", String(allowed));
+    byId("sitetoggle").disabled = false;
   }
 
   function siteNoteSet(key, substitution) {
@@ -203,15 +221,12 @@
     );
   });
 
-  byId("allow").textContent = t("allowButton");
-  byId("revoke").textContent = t("revokeButton");
-
   // The request to the browser is the first thing done in the click, with nothing awaited before it (the browser wants it to come from the
   // click). The background is told first, without waiting, so that it knows what the permission is for even if the prompt closes this popup.
-  byId("allow").addEventListener("click", function () {
+  function allowSite() {
     if (!site.host) return;
     var host = site.host;
-    byId("allow").disabled = true;
+    byId("sitetoggle").disabled = true;
     siteNoteSet("sitePending");
     ask({ type: "allow-intent", host: host, tabId: tabId });
     var asked;
@@ -228,7 +243,7 @@
       .then(
         function (granted) {
           if (!granted) {
-            byId("allow").disabled = false;
+            byId("sitetoggle").disabled = false;
             return siteNoteSet("siteDenied");
           }
           return ask({ type: "allow-done", host: host }).then(
@@ -240,34 +255,40 @@
           );
         },
         function () {
-          byId("allow").disabled = false;
+          byId("sitetoggle").disabled = false;
           siteNoteSet("siteDenied");
         },
       )
       .catch(function () {
-        byId("allow").disabled = false;
+        byId("sitetoggle").disabled = false;
         siteNoteSet("errorFailed");
       });
-  });
+  }
 
-  byId("revoke").addEventListener("click", function () {
+  function revokeSite() {
     if (!site.host) return;
     var host = site.host;
-    byId("revoke").disabled = true;
+    byId("sitetoggle").disabled = true;
     siteNoteSet("sitePending");
     ask({ type: "revoke", host: host }).then(
       function (answer) {
-        byId("revoke").disabled = false;
+        byId("sitetoggle").disabled = false;
         if (answer && answer.allowed === false) {
           drawSite(false);
           siteNoteSet("siteRevoked", host);
         } else siteNoteSet("errorFailed");
       },
       function () {
-        byId("revoke").disabled = false;
+        byId("sitetoggle").disabled = false;
         siteNoteSet("errorFailed");
       },
     );
+  }
+
+  byId("sitetoggle").addEventListener("click", function () {
+    if (byId("sitetoggle").getAttribute("aria-checked") === "true")
+      revokeSite();
+    else allowSite();
   });
 
   // "Copied" is said only when the browser wrote to the clipboard. When it cannot, the line is selected and the person is told to copy it.
