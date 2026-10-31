@@ -23,7 +23,7 @@ jobs:
           cache: false
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
       - name: The two zips of the extension (the version of the manifest is the one of the tag)
         run: |
           go run ./cmd/extbuild -version "${GITHUB_REF_NAME#v}" -zip -out extension-dist
