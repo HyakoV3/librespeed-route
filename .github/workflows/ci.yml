@@ -19,7 +19,7 @@ jobs:
           cache: false
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
       - name: The copy of the page parser is the one that is pinned
         shell: bash
         run: |
@@ -62,7 +62,7 @@ jobs:
           cache: false
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
       - name: The extension builds, and the zip is the same bytes twice
         run: |
           go run ./cmd/extbuild -version 0.0.1 -zip -out /tmp/a
