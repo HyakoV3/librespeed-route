@@ -53,7 +53,8 @@ jobs:
 
   extension:
     # The extension in the Chromium of Playwright, with the real program built with -tags e2efake (no network)
-    runs-on: ubuntu-latest
+    # Pinned: Playwright does not support the Ubuntu 26.04 that ubuntu-latest now points to
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
